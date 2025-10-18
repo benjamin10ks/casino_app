@@ -1,0 +1,38 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+
+# Production
+build/
+dist/
+public/build/
+public/dist/
+
+# Development
+.env
+.DS_Store
+.vscode/
+*.tgz
+*.zip
+*.rar
+*.tar.gz
+*.swp
+*.swo
+
+# Test
+coverage/
+.nyc_output/
+
+# Editor-specific files
+.idea/
+*.iml
+.project
+.classpath
+.settings/
