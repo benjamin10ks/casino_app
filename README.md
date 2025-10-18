@@ -3,4 +3,7 @@
 Ideas
 
  - GAMBLING
- - 
+    - poker(texas hold em)
+    - blackjack? 
+    - roulette
+    - slots
