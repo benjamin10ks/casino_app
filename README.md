@@ -7,3 +7,8 @@ Ideas
     - blackjack? 
     - roulette
     - slots
+
+# Stack
+ - Frontend: React/Vite
+ - Backend: Node.js, Express, Socket.io
+ - Database: PostgreSQL
