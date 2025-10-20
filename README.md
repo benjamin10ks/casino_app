@@ -7,6 +7,7 @@ Ideas
   - blackjack?
   - roulette
   - slots
+  - RIDE THE BUS
 
 # Stack
 
@@ -17,6 +18,8 @@ Ideas
 # How to Run
 
 while in the casino_app directory:
+
+`touch .env` follow the .env.example format to create your own .env file
 
 `npm install` to install dependencies
 
