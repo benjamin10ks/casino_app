@@ -2,21 +2,26 @@
 
 Ideas
 
- - GAMBLING
-    - poker(texas hold em)
-    - blackjack? 
-    - roulette
-    - slots
+- GAMBLING
+  - poker(texas hold em)
+  - blackjack?
+  - roulette
+  - slots
 
 # Stack
- - Frontend: React/Vite
- - Backend: Node.js, Express, Socket.io
- - Database: PostgreSQL
+
+- Frontend: React/Vite
+- Backend: Node.js, Express, Socket.io
+- Database: PostgreSQL
 
 # How to Run
 
-`npm install` in root to install client and server dependencies
+while in the casino_app directory:
 
-`npm run dev` in root to start both client and server in dev mode
+`npm install` to install dependencies
+
+`npm run dev` to start client server and DB server
+
+`npm run db:stop` to stop db when you are done
 
 That's it!
