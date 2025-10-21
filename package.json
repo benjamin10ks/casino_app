@@ -2,8 +2,8 @@
   "name": "casino_app",
   "private": true,
   "workspaces": [
-    "client",
-    "server"
+    "apps/client",
+    "apps/server"
   ],
   "scripts": {
     "setup": "npm install",
@@ -15,8 +15,7 @@
     "clean": "rm -rf node_modules client/node_modules server/node_modules"
   },
   "devDependencies": {
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10",
     "dotenv-cli": "^7.4.2"
   }
 }
+

@@ -25,6 +25,4 @@ while in the casino_app directory:
 
 `npm run dev` to start client server and DB server
 
-`npm run db:stop` to stop db when you are done
-
 That's it!
