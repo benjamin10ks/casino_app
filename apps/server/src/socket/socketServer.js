@@ -1,11 +1,16 @@
-import { Server } from 'socket.io';
+const socketAuth = require('./middleware/socketAuth');
 
-export function initSocketServer(httpServer) {
 
-  const io = Server(httpServer, {
-   cors: {
-      origin: ["http://localhost:3000"],
-      methods: ["GET", "POST"]
-   }
+moduel.exports = function setupSocketServer(server) {
+
+  io.use(socketAuth);
+
+  io.on('connection', (socket) => {
+    console.log(`User connected: ${socket.id}, User ID: ${socket.userId}`);
+  }
+
+  socket.on('disconnect', (reason) => { 
+    console.log(`User disconnected: ${socket.id}, Reason: ${reason}`);
+
   });
-}
+});
