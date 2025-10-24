@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+const NODE_SERVER_URL =
+  import.meta.env.VITE_NODE_SERVER_URL || "http://localhost:3000";
+
 export default function Chat() {
   const [username, setUsername] = useState("");
   const [socket, setSocket] = useState(null);
@@ -14,11 +17,13 @@ export default function Chat() {
       return;
     }
     //node server
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io(NODE_SERVER_URL, {
       query: { username },
     });
 
     setSocket(newSocket);
+    console.log("Connecting to server...", NODE_SERVER_URL);
+    console.log(import.meta.env);
 
     newSocket.on("connect", () => {
       console.log(`Connected as ${username}`);
