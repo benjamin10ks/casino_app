@@ -17,9 +17,7 @@ Ideas
 
 # How to Run
 
-while in the casino_app directory:
-
-`touch .env` follow the .env.example format to create your own .env file
+While in the casino_app directory:
 
 `npm install` to install dependencies
 
