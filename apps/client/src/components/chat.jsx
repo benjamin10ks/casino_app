@@ -13,8 +13,8 @@ export default function Chat() {
       alert("Please enter a username");
       return;
     }
-
-    const newSocket = io("http://localhost:5173", {
+    //node server
+    const newSocket = io("http://localhost:3000", {
       query: { username },
     });
 

@@ -9,6 +9,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
+    //vite server origin
     origin: ["http://localhost:5173"],
     methods: ["GET", "POST"],
   },
@@ -16,7 +17,8 @@ const io = new Server(server, {
 
 socketHandler(io);
 
-const PORT = process.env.PORT || 5173;
+//node server
+const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
