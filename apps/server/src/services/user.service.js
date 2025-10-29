@@ -1,3 +1,3 @@
 class UserService {
-  constructor(userRepository) {}
+  constructor() {}
 }
