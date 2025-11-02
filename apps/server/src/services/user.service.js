@@ -1,3 +1,1 @@
-class UserService {
-  constructor() {}
-}
+class UserService {}

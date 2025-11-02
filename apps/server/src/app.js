@@ -21,8 +21,8 @@ app.get("/healthz", (req, res) => {
   res.status(200).send("OK");
 });
 
-rest.use("/api", routes);
+app.use("/api", routes);
 
-res.use(notFoundHandler);
+app.use(notFoundHandler);
 
 export default app;
