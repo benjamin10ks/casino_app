@@ -3,12 +3,23 @@ import { BadRequestError, NotFoundError } from "../utils/errors.js";
 
 class UserRepository {
   async create(user, passwordHash, balance) {
-    const sql = `INTERT INTO users (username, password_hash, balance) RETURNING id`;
-    const res = await pool.query(sql, [user.username, passwordHash, balance]);
+    const sql = `INTERT INTO users (username, email, password_hash, balance) VALUES ($1, $2, $3, $4) RETURNING id`;
+    const res = await pool.query(sql, [
+      user.username,
+      user.email,
+      passwordHash,
+      balance,
+    ]);
 
     if (!res.rows[0]) {
       throw new NotFoundError("Failed to create user");
     }
+    return res.rows[0];
+  }
+
+  async findByEmail(email) {
+    const sql = `SELECT * FROM users WHERE email = $1`;
+    const res = await pool.query(sql, [email]);
     return res.rows[0];
   }
 

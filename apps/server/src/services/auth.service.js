@@ -5,7 +5,12 @@ import { sanitizeUser } from "../models/user.model.js";
 import { ConflictError, UnauthorizedError } from "../utils/errors.js";
 
 class AuthService {
-  async register({ username, password }) {
+  async register({ username, email, password }) {
+    const exitistingEmail = await userRepo.findByEmail(email);
+    if (exitistingEmail) {
+      throw new ConflictError("Email already in use");
+    }
+
     const existingUser = await userRepo.findByUsername(username);
     if (existingUser) {
       throw new ConflictError("Username already taken");
@@ -15,6 +20,7 @@ class AuthService {
 
     const user = await userRepo.create({
       username,
+      email,
       passwordHash: passwordHash,
       balance: 1000,
     });
@@ -37,9 +43,17 @@ class AuthService {
     const user = await userRepo.create({
       username,
       passwordHash: passwordHash,
-      balance: 500,
+      balance: 1000,
       isGuest: true,
     });
+
+    const token = this.generateToken(user);
+
+    return {
+      user: sanitizeUser(user),
+      token,
+      isGuest: true,
+    };
   }
 
   async convertGuest(userId, { username, password }) {
@@ -72,14 +86,14 @@ class AuthService {
     };
   }
 
-  async login(username, password) {
-    const user = await userRepo.findByUsername(username);
+  async login(email, password) {
+    const user = await userRepo.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedError("Invalid username or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new UnauthorizedError("Invalid username or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
 
     const token = this.generateToken(user);

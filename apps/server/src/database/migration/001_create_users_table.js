@@ -3,6 +3,7 @@ export const up = async (pool) => {
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       username VARCHAR(50) UNIQUE NOT NULL,
+      email VARCHAR(100) UNIQUE,
       password_hash VARCHAR(255) NOT NULL,
       balance NUMERIC(15, 2) DEFAULT 0,
       is_guest BOOLEAN DEFAULT FALSE,
@@ -11,6 +12,7 @@ export const up = async (pool) => {
     );
 
     CREATE INDEX idx_users_username ON users(username);
+    CREATE INDEX idx_users_email ON users(email);
     CREATE INDEX idx_users_is_guest ON users(created_at);
   `);
 };

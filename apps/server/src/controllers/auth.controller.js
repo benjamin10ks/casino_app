@@ -5,9 +5,9 @@ import { ApiError } from "../utils/errors.js";
 class AuthController {
   async register(req, res, next) {
     try {
-      const { username, password } = req.body;
+      const { username, email, password } = req.body;
 
-      const result = await authService.register({ username, password });
+      const result = await authService.register({ username, email, password });
 
       res.status(201).json({
         success: true,
@@ -19,9 +19,9 @@ class AuthController {
   }
   async login(req, res, next) {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
 
-      const result = await authService.login(username, password);
+      const result = await authService.login(email, password);
 
       res.json({
         success: true,
@@ -55,11 +55,12 @@ class AuthController {
 
   async convertGuest(req, res, next) {
     try {
-      const { username, password } = req.body;
+      const { username, email, password } = req.body;
       const userId = req.user.id;
 
       const result = await authService.convertGuest(userId, {
         username,
+        email,
         password,
       });
 
