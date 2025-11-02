@@ -5,9 +5,13 @@ export const up = async (pool) => {
       username VARCHAR(50) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
       balance NUMERIC(15, 2) DEFAULT 0,
+      is_guest BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE INDEX idx_users_username ON users(username);
+    CREATE INDEX idx_users_is_guest ON users(created_at);
   `);
 };
 

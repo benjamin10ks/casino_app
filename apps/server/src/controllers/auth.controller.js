@@ -1,3 +1,4 @@
+import { sanaitizeUser } from "../models/user.model.js";
 import authService from "../services/auth.service.js";
 import { ApiError } from "../utils/errors.js";
 
@@ -38,7 +39,51 @@ class AuthController {
       next(error);
     }
   }
-  async guestLogin(req, res, next) {}
+  async guestLogin(req, res, next) {
+    try {
+      const result = await authService.guestLogin();
 
-  async getCurrentUser(req, res, next) {}
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: "Playing as guest user, sign in to save your progress",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async convertGuest(req, res, next) {
+    try {
+      const { username, password } = req.body;
+      const userId = req.user.id;
+
+      const result = await authService.convertGuest(userId, {
+        username,
+        password,
+      });
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCurrentUser(req, res, next) {
+    try {
+      const user = await authService.getCurrentUser(req.user.id);
+
+      res.json({
+        success: true,
+        data: { user: sanaitizeUser(user), isGuest: user.isGuest },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+
+export default new AuthController();

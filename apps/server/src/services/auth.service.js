@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userRepo from "../repositories/user.repository.js";
+import { sanitizeUser } from "../models/user.model.js";
 import { ConflictError, UnauthorizedError } from "../utils/errors.js";
 
 class AuthService {
@@ -21,14 +22,56 @@ class AuthService {
     const token = this.generateToken(user);
 
     return {
-      user: {
-        id: user.id,
-        username: user.username,
-        balance: user.balance,
-      },
+      user: sanitizeUser(user),
       token,
     };
   }
+
+  async guestLogin() {
+    const guestId = randomBytes(4).toString("hex");
+    const username = `guest_${guestId}`;
+
+    const randomPassword = randomBytes(8).toString("hex");
+    const passwordHash = await bcrypt.hash(randomPassword, 10);
+
+    const user = await userRepo.create({
+      username,
+      passwordHash: passwordHash,
+      balance: 500,
+      isGuest: true,
+    });
+  }
+
+  async convertGuest(userId, { username, password }) {
+    const user = await userRepo.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedError("User not found");
+    }
+
+    if (!user.isGuest) {
+      throw new ConflictError("User is not a guest");
+    }
+
+    const existingUser = await userRepo.findByUsername(username);
+    if (existingUser) {
+      throw new ConflictError("Username already taken");
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const updatedUser = await userRepo.update(userId, {
+      username,
+      passwordHash,
+      isGuest: false,
+    });
+
+    return {
+      user: sanitizeUser(updatedUser),
+      message: "Account upgraded successfully! Your balance has been saved.",
+    };
+  }
+
   async login(username, password) {
     const user = await userRepo.findByUsername(username);
     if (!user) {
@@ -42,11 +85,7 @@ class AuthService {
     const token = this.generateToken(user);
 
     return {
-      user: {
-        id: user.id,
-        username: user.username,
-        balance: user.balance,
-      },
+      user: sanitizeUser(user),
       token,
     };
   }
