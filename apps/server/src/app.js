@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 
-import { notFoundHandler } from "./middlewares/notFoundHandler.js";
+import { notFound } from "./middleware/notFound.middleware.js";
 
 import routes from "./routes/index.js";
 
@@ -23,6 +23,6 @@ app.get("/healthz", (req, res) => {
 
 app.use("/api", routes);
 
-app.use(notFoundHandler);
+app.use(notFound);
 
 export default app;
