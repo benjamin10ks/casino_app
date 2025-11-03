@@ -16,6 +16,8 @@
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.2"
+  },
+  "dependencies": {
+    "joi": "^18.0.1"
   }
 }
-
