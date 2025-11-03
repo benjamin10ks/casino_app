@@ -19,5 +19,6 @@ export function formatUserResponse(user) {
     balance: parseFloat(user.balance),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+    isGuest: user.isGuest,
   };
 }

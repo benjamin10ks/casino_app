@@ -20,7 +20,9 @@ class UserRepository {
   async findByEmail(email) {
     const sql = `SELECT * FROM users WHERE email = $1`;
     const res = await pool.query(sql, [email]);
-    return res.rows[0];
+    if (!res.rows[0]) {
+      return res.rows[0] || null;
+    }
   }
 
   async findByUsername(username) {
