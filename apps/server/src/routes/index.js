@@ -1,9 +1,9 @@
 import express from "express";
-import authRoutes from "./authRoutes.js";
-import userRoutes from "./userRoutes.js";
-import gameRoutes from "./gameRoutes.js";
-import transactionRoutes from "./transactionRoutes.js";
-import leaderboardRoutes from "./leaderboardRoutes.js";
+import authRoutes from "./auth.routes.js";
+import userRoutes from "./user.routes.js";
+import gameRoutes from "./game.routes.js";
+import transactionRoutes from "./transaction.routes.js";
+import leaderboardRoutes from "./leaderboard.routes.js";
 
 const router = express.Router();
 
