@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/api-error.util.js";
+import { ApiError } from "../utils/errors.js";
 import userRepo from "../repositories/user.repository.js";
 
-export const authMiddleware = async (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.replace("Bearer ", "");
 

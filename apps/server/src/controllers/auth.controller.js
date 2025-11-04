@@ -1,4 +1,4 @@
-import { sanaitizeUser } from "../models/user.model.js";
+import { sanitizeUser } from "../models/user.model.js";
 import authService from "../services/auth.service.js";
 import { ApiError } from "../utils/errors.js";
 
@@ -79,7 +79,7 @@ class AuthController {
 
       res.json({
         success: true,
-        data: { user: sanaitizeUser(user), isGuest: user.isGuest },
+        data: { user: sanitizeUser(user), isGuest: user.isGuest },
       });
     } catch (error) {
       next(error);

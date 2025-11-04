@@ -4,7 +4,7 @@ export const UserStatus = {
   BANNED: "banned",
 };
 
-export function sanaitizeUser(user) {
+export function sanitizeUser(user) {
   if (!user) return null;
 
   const { passwordHash, ...sanitizedUser } = user;

@@ -39,6 +39,18 @@ class ConflictError extends ApiError {
   }
 }
 
+class ValidationError extends ApiError {
+  constructor(message = "Validation Error") {
+    super(422, message);
+  }
+}
+
+class InternalServerError extends ApiError {
+  constructor(message = "Internal Server Error") {
+    super(500, message);
+  }
+}
+
 export {
   ApiError,
   BadRequestError,

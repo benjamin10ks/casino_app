@@ -31,4 +31,4 @@ pool.transaction = async (callback) => {
   }
 };
 
-module.exports = pool;
+export default pool;
