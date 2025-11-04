@@ -1,10 +1,10 @@
-import * as dotenv from "dotenv";
-dotenv.config();
-
+import "../config.js";
 import http from "http";
 import { Server } from "socket.io";
 import socketHandler from "./socket/socketServer.js";
 import app from "./app.js";
+
+console.log(process.env.DB_PASSWORD);
 
 const server = http.createServer(app);
 

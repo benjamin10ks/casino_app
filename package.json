@@ -7,20 +7,14 @@
   ],
   "scripts": {
     "setup": "npm install",
-    "start:db": "docker run -d --rm --name my-postgres-db -p 5432:5432 -e POSTGRES_DB=casion_app -e POSTGRES_USER=db_user -e POSTGRES_PASSWORD=password postgres:latest",
+    "start:db": "docker run -d --rm --name my-postgres-db -p 5432:5432 --env-file ./apps/server/.env postgres:latest",
     "stop:db": "docker stop my-postgres-db",
     "dev:app": "npm run dev --workspace=client & npm run dev --workspace=server",
     "dev": "npm run start:db && npm run dev:app",
     "build": "npm run build --workspace=client && npm run build --workspace=server",
-    "clean": "rm -rf node_modules client/node_modules server/node_modules"
+    "clean": "rm -rf node_modules apps/client/node_modules apps/server/node_modules"
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.4"
-  },
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "joi": "^18.0.1",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.16.3"
   }
 }
