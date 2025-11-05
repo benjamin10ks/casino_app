@@ -3,12 +3,13 @@ import { BadRequestError, NotFoundError } from "../utils/errors.js";
 
 class UserRepository {
   async create(user, passwordHash, balance) {
-    const sql = `INSERT INTO users (username, email, password_hash, balance) VALUES ($1, $2, $3, $4) RETURNING id`;
+    const sql = `INSERT INTO users (username, email, password_hash, balance, is_guest) VALUES ($1, $2, $3, $4, $5) RETURNING id`;
     const res = await pool.query(sql, [
       user.username,
       user.email,
       passwordHash,
       balance,
+      isGuest,
     ]);
 
     if (!res.rows[0]) {
