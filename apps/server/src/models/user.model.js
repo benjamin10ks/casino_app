@@ -17,8 +17,8 @@ export function formatUserResponse(user) {
     username: user.username,
     email: user.email,
     balance: parseFloat(user.balance),
+    isGuest: user.isGuest,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    isGuest: user.isGuest,
   };
 }

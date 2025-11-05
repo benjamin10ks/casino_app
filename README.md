@@ -21,6 +21,11 @@ While in the casino_app directory:
 
 `npm install` to install dependencies
 
+NEED TO FIGURE OUT AUTO MIGRATIONS FOR POSTGRES
+FOR NOW `npm run start:db` and `node scripts/migrate.js` to set up DB
+
+THEN
+
 `npm run dev` to start client server and DB server
 
 That's it!

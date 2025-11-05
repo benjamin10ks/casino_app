@@ -1,15 +1,15 @@
 import pool from "../database/connection.js";
-import { BadRequestError, NotFoundError } from "../utils/errors.js";
+import { NotFoundError } from "../utils/errors.js";
 
 class UserRepository {
-  async create(user, passwordHash, balance) {
-    const sql = `INSERT INTO users (username, email, password_hash, balance, is_guest) VALUES ($1, $2, $3, $4, $5) RETURNING id`;
+  async create(userData) {
+    const sql = `INSERT INTO users (username, email, password_hash, balance, is_guest) VALUES ($1, $2, $3, $4, $5) RETURNING (id, username, email, balance, is_guest, created_at)`;
     const res = await pool.query(sql, [
-      user.username,
-      user.email,
-      passwordHash,
-      balance,
-      isGuest,
+      userData.username,
+      userData.email,
+      userData.passwordHash,
+      userData.balance || 1000,
+      userData.isGuest,
     ]);
 
     if (!res.rows[0]) {
