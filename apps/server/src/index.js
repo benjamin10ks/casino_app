@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import socketHandler from "./socket/socketServer.js";
 import app from "./app.js";
 
-console.log(process.env.DB_PASSWORD);
+console.log(process.env.POSTGRES_PASSWORD);
 
 const server = http.createServer(app);
 
