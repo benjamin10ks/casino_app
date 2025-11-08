@@ -14,7 +14,31 @@ class UserService {
     return sanitizedUser(user);
   }
 
-  async updateProfile() {}
+  async updateProfile(userId, updates) {
+    if (updates.username) {
+      const existingUser = await userRepository.findByUsername(
+        updates.username,
+      );
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error("Username already taken");
+      }
+    }
+    if (updates.email) {
+      const existingUser = await userRepository.findByEmail(updates.email);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error("Email already in use");
+      }
+    }
+
+    const user = await userRepository.findById(userId, updates);
+    if (user.isGuest) {
+      throw new Error("Guest users cannot update profile");
+    }
+
+    const updatedUser = await userRepository.update(userId, updates);
+
+    return sanitizedUser(updatedUser);
+  }
 
   async getUserStats(userId) {
     const user = await userRepository.findById(userId);
@@ -51,6 +75,19 @@ class UserService {
     };
   }
 
+  async getUserBalance(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return {
+      balance: parseFloat(user.balance),
+      username: user.username,
+      isGuest: user.is_guest,
+    };
+  }
+
   async getTransactionHistory(userId, options = {}) {
     const user = await userRepository.findById(userId);
     if (!user) {
@@ -63,6 +100,69 @@ class UserService {
       throw new Error("Limit cannot exceed 100");
     }
 
-    const transactions = 
+    const transactions = await transactionRepository.getByUserId(userId, {
+      limit,
+      offset,
+      type,
+    });
+
+    return {
+      transactions: transactions.map((t) => ({
+        id: t.id,
+        amount: parseFloat(t.amount),
+        type: t.type,
+        description: t.description,
+        gameId: t.game_id,
+        createdAt: t.created_at,
+      })),
+      pagination: {
+        limit,
+        offset,
+        hasMore: transactions.length === limit,
+      },
+    };
+  }
+
+  async getRecentGames(userId, limit = 10) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const bets = await betRepository.getRecentByUserId(userId, { limit });
+
+    return bets.map((b) => ({
+      id: b.id,
+      gameType: b.game_type,
+      amount: parseFloat(b.amount),
+      payout: parseFloat(b.payout),
+      status: b.status,
+      result: b.result,
+      profit: parseFloat(b.payout) - parseFloat(b.amount),
+      placedAt: b.created_at,
+    }));
+  }
+
+  async canAffordBet(userId, amount) {
+    if (amount <= 0) {
+      return { canAfford: false, reason: "Invalid bet amount" };
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const balance = parseFloat(user.balance);
+    const canAfford = balance >= amount;
+
+    return {
+      canAfford,
+      balance,
+      shortfall: canAfford ? 0 : amount - balance,
+      reason: canAfford ? null : "Insufficient balance",
+    };
   }
 }
+
+export default new UserService();

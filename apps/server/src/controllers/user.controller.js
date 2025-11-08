@@ -10,16 +10,44 @@ class UserController {
 
       res.status(200).json({
         success: true,
-        data: userProfile,
+        data: { user: userProfile },
       });
     } catch (error) {
       next(error);
     }
   }
 
-  async updateProfile(req, res, next) {}
+  async updateProfile(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const updates = req.body;
 
-  async getBalance(req, res, next) {}
+      const updatedUser = await userService.updateProfile(userId, updates);
+
+      res.json({
+        success: true,
+        data: { user: updatedUser },
+        message: "Profile updated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getBalance(req, res, next) {
+    try {
+      const userId = req.user.id;
+
+      const balance = await userService.getUserBalance(userId);
+
+      res.json({
+        success: true,
+        data: balance,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   async getStats(req, res, next) {
     try {
@@ -36,3 +64,5 @@ class UserController {
     }
   }
 }
+
+export default new UserController();
