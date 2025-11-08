@@ -6,8 +6,7 @@ export const UserStatus = {
 
 export function sanitizeUser(user) {
   if (!user) return null;
-
-  const { passwordHash, ...sanitizedUser } = user;
+  const { password_hash, ...sanitizedUser } = user;
   return sanitizedUser;
 }
 
@@ -17,8 +16,8 @@ export function formatUserResponse(user) {
     username: user.username,
     email: user.email,
     balance: parseFloat(user.balance),
-    isGuest: user.isGuest,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    isGuest: user.is_guest,
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
   };
 }

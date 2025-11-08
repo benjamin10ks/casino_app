@@ -17,7 +17,6 @@ class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    console.log(passwordHash);
 
     const user = await userRepo.create({
       username,
@@ -26,8 +25,6 @@ class AuthService {
       balance: 1000,
       isGuest: false,
     });
-
-    console.log(user);
 
     const token = this.generateToken(user);
 
@@ -94,6 +91,7 @@ class AuthService {
 
   async login(email, password) {
     const user = await userRepo.findByEmail(email);
+    console.log(user);
     if (!user) {
       throw new UnauthorizedError("Invalid email or password");
     }
@@ -104,7 +102,7 @@ class AuthService {
       );
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       throw new UnauthorizedError("Invalid email or password");
     }
