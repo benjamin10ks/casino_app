@@ -1,11 +1,14 @@
-import Chat from "./components/chat";
+import Router from "./router";
+import { SocketProvider } from "./contexts/SocketContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
-    <div className="display-flex flex-column align-center padding-2">
-      <h1>Chat</h1>
-      <Chat />
-    </div>
+    <AuthProvider>
+      <SocketProvider>
+        <Router />
+      </SocketProvider>
+    </AuthProvider>
   );
 }
 
