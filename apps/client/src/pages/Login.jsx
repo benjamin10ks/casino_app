@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/lobby");
+      navigate("/");
     } catch (err) {
       setError("Login failed. Please check your credentials.", err);
     } finally {
@@ -32,7 +32,7 @@ export default function Login() {
 
     try {
       await guestLogin();
-      navigate("/lobby");
+      navigate("/");
     } catch (err) {
       setError("Guest login failed. Please try again.", err);
     } finally {

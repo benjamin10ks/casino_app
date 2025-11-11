@@ -35,10 +35,10 @@ class AuthService {
   }
 
   async guestLogin() {
-    const guestId = randomBytes(4).toString("hex");
+    const guestId = Math.random().toString(36).substring(2, 10);
     const username = `guest_${guestId}`;
 
-    const randomPassword = randomBytes(8).toString("hex");
+    const randomPassword = Math.random().toString(36).substring(2, 10);
     const passwordHash = await bcrypt.hash(randomPassword, 10);
 
     const user = await userRepo.create({

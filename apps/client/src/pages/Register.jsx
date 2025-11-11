@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Register() {
@@ -31,7 +31,7 @@ export default function Register() {
 
     try {
       await register(username, email, password);
-      navigate("/lobby");
+      navigate("/");
     } catch (err) {
       setError(err.message);
     } finally {

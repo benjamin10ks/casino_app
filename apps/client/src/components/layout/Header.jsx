@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Header() {
   const { user, isGuest, logout } = useAuth();
@@ -20,7 +20,6 @@ export default function Header() {
           {user ? (
             <>
               <Link to="/profile">Profile</Link>
-              <Link to="/lobby">Lobby</Link>
               <div>
                 <span className="header-username">
                   {user.username} {isGuest && "(Guest)"}

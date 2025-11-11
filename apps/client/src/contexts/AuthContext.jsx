@@ -3,7 +3,7 @@ import api from "../services/api";
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);

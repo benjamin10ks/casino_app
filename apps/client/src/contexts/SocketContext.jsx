@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 
 const SocketContext = createContext(null);
 
-export function SocketProvider({ children }) {
+export default function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
   const { user } = useAuth();
