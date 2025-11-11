@@ -13,6 +13,7 @@ class AuthController {
         success: true,
         data: { user: result.user, token: result.token },
       });
+      console.log("User registered:", result.user.id, username, email);
     } catch (error) {
       next(error);
     }
@@ -35,6 +36,7 @@ class AuthController {
     try {
       await authService.logout(req.user.id);
       res.json({ success: true, message: "Logged out successfully" });
+      console.log("User logged out:", req.user.id, username);
     } catch (error) {
       next(error);
     }
@@ -48,6 +50,7 @@ class AuthController {
         data: result,
         message: "Playing as guest user, sign in to save your progress",
       });
+      console.log("Guest user logged in:", result.user.id);
     } catch (error) {
       next(error);
     }
@@ -68,6 +71,12 @@ class AuthController {
         success: true,
         data: result,
       });
+      console.log(
+        "Converted guest user to registered:",
+        result.user.id,
+        username,
+        email,
+      );
     } catch (error) {
       next(error);
     }
@@ -81,6 +90,7 @@ class AuthController {
         success: true,
         data: { user: sanitizeUser(user), isGuest: user.isGuest },
       });
+      console.log("Fetched current user:", user.id);
     } catch (error) {
       next(error);
     }
