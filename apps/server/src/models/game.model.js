@@ -1,7 +1,6 @@
-class Game {
-  constructor(id, name, type) {
-    this.id = id;
-    this.name = name;
-    this.type = type;
-  }
+export function formatGameResponse(game) {
+  return {
+    id: game.id,
+    type: game.type,
+  };
 }
