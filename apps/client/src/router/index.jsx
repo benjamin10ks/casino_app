@@ -5,7 +5,7 @@ import Layout from "../components/layout/Layout";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-//import Lobby from "../pages/Lobby";
+import Lobby from "../pages/Lobby";
 //import GamePage from "../pages/GamePage";
 //import Profile from "../pages/Profile";
 //import History from "../pages/History";
@@ -27,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: "register",
         element: <Register />,
+      },
+      {
+        path: "lobby",
+        element: <Lobby />,
       },
     ],
   },

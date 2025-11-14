@@ -1,5 +1,9 @@
+import { useNavigate } from "react-router-dom";
+
 export default function Home() {
   const games = ["Poker", "Blackjack", "Roulette", "Slots", "Ride the Bus"];
+
+  const navigate = useNavigate();
 
   return (
     <div className="relative min-h-screen bg-linear-to-b from-zinc-950 via-zinc-900 to-black flex flex-col items-center justify-center text-center overflow-hidden">
@@ -19,6 +23,7 @@ export default function Home() {
               <div
                 key={game}
                 className="relative bg-zinc-800 text-white w-28 h-40 md:w-36 md:h-52 rounded-xl border border-zinc-700 shadow-2xl cursor-pointer hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out flex items-center justify-center font-bold text-sm md:text-base"
+                onClick={() => navigate(`/lobby`)}
                 style={{
                   transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
                   zIndex: 100 - Math.abs(index - 2), // keep middle cards on top

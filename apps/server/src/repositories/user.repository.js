@@ -3,7 +3,9 @@ import { NotFoundError } from "../utils/errors.js";
 
 class UserRepository {
   async create(userData) {
-    const sql = `INSERT INTO users (username, email, password_hash, balance, is_guest) VALUES ($1, $2, $3, $4, $5) RETURNING (id, username, email, balance, is_guest, created_at)`;
+    const sql = `INSERT INTO users (username, email, password_hash, balance, is_guest) 
+                  VALUES ($1, $2, $3, $4, $5) 
+                  RETURNING id, username, email, balance, is_guest, created_at`;
     const res = await pool.query(sql, [
       userData.username,
       userData.email,
