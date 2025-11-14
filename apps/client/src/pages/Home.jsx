@@ -22,7 +22,7 @@ export default function Home() {
             return (
               <div
                 key={game}
-                className="relative bg-zinc-800 text-white w-28 h-40 md:w-36 md:h-52 rounded-xl border border-zinc-700 shadow-2xl cursor-pointer hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out flex items-center justify-center font-bold text-sm md:text-base"
+                className="relative bg-zinc-800 text-white w-28 h-40 md:w-45 md:h-67 rounded-xl border border-zinc-700 shadow-2xl cursor-pointer hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-out flex items-center justify-center font-bold text-sm md:text-base"
                 onClick={() => navigate(`/lobby`)}
                 style={{
                   transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
