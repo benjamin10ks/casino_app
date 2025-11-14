@@ -1,5 +1,4 @@
 import userService from "../services/user.service.js";
-import { ApiError } from "../utils/apiError.js";
 
 class UserController {
   async getProfile(req, res, next) {

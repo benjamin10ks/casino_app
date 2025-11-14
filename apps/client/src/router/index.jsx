@@ -7,7 +7,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Lobby from "../pages/Lobby";
 //import GamePage from "../pages/GamePage";
-//import Profile from "../pages/Profile";
+import Profile from "../pages/Profile";
 //import History from "../pages/History";
 //import Leaderboard from "../pages/Leaderboard";
 
@@ -31,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: "lobby",
         element: <Lobby />,
+      },
+      {
+        path: "profile",
+        element: <Profile />,
       },
     ],
   },

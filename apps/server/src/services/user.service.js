@@ -1,6 +1,6 @@
 import userRepository from "../repositories/user.repository.js";
-import transactionRepository from "../repositories/transaction.repository.js";
-import betRepository from "../repositories/bet.repository.js";
+//import transactionRepository from "../repositories/transaction.repository.js";
+//import betRepository from "../repositories/bet.repository.js";
 import { NotFoundError } from "../utils/errors.js";
 
 class UserService {
