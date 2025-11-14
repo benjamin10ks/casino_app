@@ -13,8 +13,6 @@ class AuthController {
         success: true,
         data: { user: result.user, token: result.token },
       });
-      console.log("User registered:", result.user.id, username, email);
-      console.log("User: ", result.user);
     } catch (error) {
       next(error);
     }
@@ -35,11 +33,8 @@ class AuthController {
   }
   async logout(req, res, next) {
     try {
-      console.log("Request:", req);
-      console.log("Logging out user:", req.user.id);
       await authService.logout(req.user.id);
       res.json({ success: true, message: "Logged out successfully" });
-      console.log("User logged out:", req.id, username);
     } catch (error) {
       next(error);
     }
@@ -53,7 +48,6 @@ class AuthController {
         data: result,
         message: "Playing as guest user, sign in to save your progress",
       });
-      console.log("Guest user logged in:", result);
     } catch (error) {
       next(error);
     }
