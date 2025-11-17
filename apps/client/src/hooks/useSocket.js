@@ -1,4 +1,4 @@
-import { useContext } from "hooks/useContext";
+import { useContext } from "react";
 import { SocketContext } from "../contexts/SocketContext";
 
 export function useSocket() {

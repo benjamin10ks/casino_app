@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSocket } from "../contexts/SocketContext";
-import { useAuth } from "../contexts/AuthContext";
+import { useSocket } from "../hooks/useSocket.js";
+import { useAuth } from "../hooks/useAuth.js";
 
 export function useGame(gameId, gameType) {
   const { socket, connected } = useSocket();
@@ -54,7 +54,19 @@ export function useGame(gameId, gameType) {
 
       setIsInGame(false);
     };
-  }, [connected, socket, gameId, isInGame]);
+  }, [
+    connected,
+    socket,
+    gameId,
+    isInGame,
+    handleGameUpdate,
+    handlePlayerJoined,
+    handlePlayerLeft,
+    handleBetPlaced,
+    handlePayout,
+    handleGameEnded,
+    handleGameError,
+  ]);
 
   const handleGameUpdate = useCallback((data) => {
     console.log("Game update received:", data);

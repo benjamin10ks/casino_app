@@ -1,11 +1,11 @@
-import { userParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useGame } from "../hooks/useGame";
 import { useAuth } from "../hooks/useAuth";
 import Chat from "../components/Chat.jsx";
 //import games
 
 export default function Game() {
-  const { gameType, gameId } = userParams();
+  const { gameType, gameId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
 

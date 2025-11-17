@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useChat } from "../hooks/useChat.jsx";
-import { useAuth } from "../hooks/useAuth.jsx";
+import { useChat } from "../hooks/useChat.js";
+import { useAuth } from "../hooks/useAuth.js";
 
 export default function Chat(gameId = null) {
   const { user } = useAuth();

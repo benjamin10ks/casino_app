@@ -65,3 +65,5 @@ export default function SocketProvider({ children }) {
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 }
+
+export { SocketContext };
