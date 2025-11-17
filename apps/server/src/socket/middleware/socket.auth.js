@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import userRepo from "../../repositories/user.repo.js";
+import userRepo from "../../repositories/user.repository.js";
 import { UnauthorizedError } from "../../utils/errors.js";
 
 export default async function socketAuthMiddleware(socket, next) {
