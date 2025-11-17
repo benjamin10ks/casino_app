@@ -1,6 +1,7 @@
 import { userParams, useNavigate } from "react-router-dom";
 import { useGame } from "../hooks/useGame";
 import { useAuth } from "../hooks/useAuth";
+import Chat from "../components/Chat.jsx";
 //import games
 
 export default function Game() {
@@ -91,6 +92,7 @@ export default function Game() {
         {gameType === "ride-the-bus" && <div>ride-the-bus</div>}
         {gameType === "slots" && <div>SLOTS</div>}
       </div>
+      <Chat gameId={gameId} />
     </div>
   );
 }
