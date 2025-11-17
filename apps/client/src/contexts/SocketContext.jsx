@@ -41,6 +41,12 @@ export default function SocketProvider({ children }) {
 
     newSocket.on("connect_error", (err) => {
       console.error("Socket connection error:", err);
+      if (
+        err.message.includes("Authentication") ||
+        err.message.includes("token")
+      ) {
+        console.log("Authentication failed, login again.");
+      }
     });
 
     setSocket(newSocket);
