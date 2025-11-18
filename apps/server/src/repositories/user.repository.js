@@ -91,13 +91,18 @@ class UserRepository {
 
   async getUserStats(userId) {
     const sql = `
-    SELECT u.id, u.username, u.email, u.balance, u.is_guest, u.created_at,
+    SELECT u.id, u.username, u.balance,
     COUNT(DISTINCT g.id) AS total_bets,
     COALESCE(SUM(CASE WHEN b.status = 'WON' THEN 1 ELSE 0 END), 0) AS wins,
     COALESCE(SUM(CASE WHEN b.status = 'LOST' THEN 1 ELSE 0 END), 0) AS losses,
     COALESCE(SUM(CASE WHEN t.type = 'BET' THEN t.amount ELSE 0 END), 0) AS total_amount_bet
     COALESCE(SUM(CASE WHEN t.type = 'WIN' THEN t.amount ELSE 0 END), 0) AS total_amount_won
-    `;
+    FROM users u
+    LEFT JOIN bets b ON b.user_id = u.id
+    LEFT JOIN transactions t ON t.user_id = u.id
+    WHERE u.id = $1
+    GROUP BY u.id, u.username, u.balance
+`;
 
     const res = await pool.query(sql, [userId]);
     if (!res.rows[0]) {
