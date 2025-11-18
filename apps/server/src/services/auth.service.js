@@ -115,8 +115,8 @@ class AuthService {
     };
   }
 
-  generateToken(userId) {
-    return jwt.sign({ userId: userId }, process.env.JWT_SECRET, {
+  generateToken(user) {
+    return jwt.sign({ user: user }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
   }

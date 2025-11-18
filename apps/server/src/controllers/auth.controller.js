@@ -1,4 +1,5 @@
 import { sanitizeUser } from "../models/user.model.js";
+import userRepository from "../repositories/user.repository.js";
 import authService from "../services/auth.service.js";
 import { ApiError } from "../utils/errors.js";
 
@@ -81,7 +82,7 @@ class AuthController {
 
   async getCurrentUser(req, res, next) {
     try {
-      const user = await authService.getCurrentUser(req.user.id);
+      const user = await userRepository.findById(req.user.id);
 
       res.json({
         success: true,

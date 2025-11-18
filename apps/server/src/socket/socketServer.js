@@ -5,7 +5,7 @@ const socketHandler = (io) => {
   io.use(socketAuth);
 
   io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.id}, Username: ${username}`);
+    console.log(`User connected: ${socket.id}, Username: ${socket.username}`);
 
     chatHandler(io, socket);
 

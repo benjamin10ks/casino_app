@@ -43,7 +43,7 @@ export default function chatHandler(io, socket) {
     }
   });
 
-  socket.broadcast.emit("chat:message", (data, callback) => {
+  socket.on("chat:message", (data, callback) => {
     try {
       const { gameId, message } = data;
 
@@ -74,7 +74,7 @@ export default function chatHandler(io, socket) {
 
       console.log(`Game ${gameId} | ${username}: ${message.trim()}`);
 
-      if (callback) {
+      if (callback && typeof callback === "function") {
         callback({ status: "ok", messageId: chatMessage.id });
       }
     } catch (err) {

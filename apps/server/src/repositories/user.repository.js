@@ -35,9 +35,7 @@ class UserRepository {
   async findById(id) {
     const sql = `SELECT * FROM users WHERE id = $1`;
     const res = await pool.query(sql, [id]);
-    if (!res.rows[0]) {
-      return res.rows[0] || null;
-    }
+    return res.rows[0] || null;
   }
 
   async update(id, updateData) {

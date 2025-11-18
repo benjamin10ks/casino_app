@@ -11,7 +11,7 @@ export const authenticate = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await userRepo.findById(decoded.userId);
+    const user = await userRepo.findById(decoded.user.id);
 
     if (!user) {
       throw new ApiError(401, "User not found");

@@ -26,10 +26,11 @@ export default async function socketAuthMiddleware(socket, next) {
       if (jwtError.name === "TokenExpiredError") {
         return next(new UnauthorizedError("Authentication token has expired"));
       }
+      c;
       return next(new UnauthorizedError("Invalid authentication token"));
     }
 
-    const user = await userRepo.getById(decoded.userId);
+    const user = await userRepo.findById(decoded.user.id);
 
     if (!user) {
       return next(new UnauthorizedError("User not found"));

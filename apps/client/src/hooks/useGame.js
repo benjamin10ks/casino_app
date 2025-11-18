@@ -11,7 +11,7 @@ export function useGame(gameId, gameType) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isInGame, setIsInGame] = useState(false);
-
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!connected || !socket || !gameId) return;
 
@@ -54,20 +54,8 @@ export function useGame(gameId, gameType) {
 
       setIsInGame(false);
     };
-  }, [
-    connected,
-    socket,
-    gameId,
-    isInGame,
-    handleGameUpdate,
-    handlePlayerJoined,
-    handlePlayerLeft,
-    handleBetPlaced,
-    handlePayout,
-    handleGameEnded,
-    handleGameError,
-  ]);
-
+  }, [connected, socket, gameId, isInGame]);
+  /* eslint-enable react-hooks/exhaustive-deps */
   const handleGameUpdate = useCallback((data) => {
     console.log("Game update received:", data);
     setGameState(data.gameState);

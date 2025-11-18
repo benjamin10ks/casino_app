@@ -54,7 +54,7 @@ export default function SocketProvider({ children }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [user, socket]);
+  }, [user]);
 
   const value = {
     socket,

@@ -10,7 +10,7 @@ export function useChat(gameId = null) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isInRoom, setIsInRoom] = useState(false);
   const [error, setError] = useState(null);
-
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!socket || !connected || !user) return;
 
@@ -39,17 +39,8 @@ export function useChat(gameId = null) {
 
       setIsInRoom(false);
     };
-  }, [
-    socket,
-    connected,
-    user,
-    gameId,
-    handleNewMessage,
-    handleUserJoined,
-    handleUserLeft,
-    sendMessage,
-  ]);
-
+  }, [socket, connected, user, gameId]);
+  /* eslint-enable react-hooks/exhaustive-deps */
   const handleNewMessage = useCallback((message) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   }, []);
