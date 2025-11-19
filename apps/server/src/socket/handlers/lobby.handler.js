@@ -40,6 +40,10 @@ export default function lobbyHandler(socket, io) {
   });
 
   socket.on("lobby:createGame", async (data, callback) => {
+    console.log(
+      `User ${username} (${userId}) is creating a game with data:`,
+      data,
+    );
     try {
       const { gameType, maxPlayers, minBet } = data;
 
