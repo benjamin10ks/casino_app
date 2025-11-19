@@ -7,7 +7,6 @@ export const up = async (pool) => {
     status VARCHAR(20) NOT NULL DEFAULT 'waiting', -- 'waiting', 'in_progress', 'completed'
     max_players INT NOT NULL DEFAULT 6,
     min_bet DECIMAL(15, 2) NOT NULL DEFAULT 10.00,
-    max_bet DECIMAL(15, 2) NOT NULL DEFAULT 1000.00,
     current_round INTEGER DEFAULT 0,
 
     game_state JSONB DEFAULT '{}',
