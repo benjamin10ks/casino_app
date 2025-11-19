@@ -15,20 +15,20 @@ export const up = async (pool) => {
 
     round_number INTEGER,
     placed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP
+    resolved_at TIMESTAMP,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE INDEX idx_bets_user_id ON bets(user_id);
-    CREATE INDEX idx_bets_game_id ON bets(game_id);
-    CREATE INDEX idx_bets_status ON bets(status);
-    CREATE INDEX idx_bets_placed_at ON bets(placed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
+    CREATE INDEX IF NOT EXISTS idx_bets_game_id ON bets(game_id);
+    CREATE INDEX IF NOT EXISTS idx_bets_status ON bets(status);
+    CREATE INDEX IF NOT EXISTS idx_bets_placed_at ON bets(placed_at DESC);
 
 `);
 };
 
 export const down = async (pool) => {
-  await pool.query(`DROP TABLE IF EXISTS transactions CASCADE;`);
+  await pool.query(`DROP TABLE IF EXISTS bets CASCADE;`);
 };

@@ -4,26 +4,26 @@ export const up = async (pool) => {
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
-    amount DECIMAL(15, 2) NOT NULL,
-    type VARCHAR(50) NOT NULL, -- 'deposit', 'withdrawal', 'bet', 'payout', etc.
-    status VARCHAR(20) NOT NULL, -- 'pending', 'completed', 'failed'
-    
-    game_id INTEGER REFERENCES games(id) ON DELETE SET NULL,
-    bet_id INTEGER REFERENCES bets(id) ON DELETE SET NULL,
+      amount DECIMAL(15, 2) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      status VARCHAR(20) NOT NULL,
 
-    description TEXT,
-    metadata JSONB DEFAULT '{}',
+      game_id INTEGER REFERENCES games(id) ON DELETE SET NULL,
+      bet_id INTEGER REFERENCES bets(id) ON DELETE SET NULL,
 
-    balance_before DECIMAL(15, 2) NOT NULL,
-    balance_after DECIMAL(15, 2) NOT NULL,
+      description TEXT,
+      metadata JSONB DEFAULT '{}',
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      balance_before DECIMAL(15, 2) NOT NULL,
+      balance_after DECIMAL(15, 2) NOT NULL,
+
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
-    CREATE INDEX idx_transactions_user_id ON transactions(user_id);
-    CREATE INDEX idx_transactions_type ON transactions(type);
-    CREATE INDEX idx_transactions_status ON transactions(status);
-    CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+    CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+    CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC);
   `);
 };
 

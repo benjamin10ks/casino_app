@@ -11,9 +11,9 @@ export const up = async (pool) => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE INDEX idx_users_username ON users(username);
-    CREATE INDEX idx_users_email ON users(email);
-    CREATE INDEX idx_users_is_guest ON users(created_at);
+    CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_users_is_guest ON users(created_at);
   `);
 };
 
