@@ -1,6 +1,6 @@
 import userRepository from "../repositories/user.repository.js";
-//import transactionRepository from "../repositories/transaction.repository.js";
-//import betRepository from "../repositories/bet.repository.js";
+import transactionRepository from "../repositories/transaction.repository.js";
+import betRepository from "../repositories/bet.repository.js";
 import { NotFoundError } from "../utils/errors.js";
 
 class UserService {
@@ -100,7 +100,7 @@ class UserService {
       throw new Error("Limit cannot exceed 100");
     }
 
-    const transactions = await transactionRepository.getByUserId(userId, {
+    const transactions = await transactionRepository.findByUserId(userId, {
       limit,
       offset,
       type,
@@ -129,7 +129,7 @@ class UserService {
       throw new NotFoundError("User not found");
     }
 
-    const bets = await betRepository.getRecentByUserId(userId, { limit });
+    const bets = await betRepository.findByUserId(userId, { limit });
 
     return bets.map((b) => ({
       id: b.id,
