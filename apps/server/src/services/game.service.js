@@ -197,6 +197,125 @@ class GameService {
       }
 
       await chipsService.placeBet(userId, betData.amount, gameId, client);
+
+      const bet = await betRepository.createBet(
+        {
+          user_id: userId,
+          game_id: gameId,
+          amount: betData.amount,
+          bet_type: betData.betType || "main",
+          bet_data: betData.betData || {},
+          round_number: game.current_round,
+        },
+        client,
+      );
+
+      await gameSessionRepository.updateStats(
+        gameId,
+        userId,
+        {
+          total_bet: betData.amount,
+        },
+        client,
+      );
+
+      return {
+        success: true,
+        bet: {
+          id: bet.id,
+          amount: parseFloat(bet.amount),
+          betType: bet.bet_type,
+        },
+      };
+    });
+  }
+
+  async resolveBet(betId, outcome) {
+    return pool.transaction(async (client) => {
+      const bet = await betRepository.findById(betId);
+
+      if (!bet) {
+        throw new NotFoundError("Bet not found");
+      }
+
+      if (bet.status !== "pending") {
+        throw new BadRequestError("Bet already resolved");
+      }
+
+      const resolvedBet = await betRepository.updateBetStatus(
+        betId,
+        outcome,
+        client,
+      );
+
+      if (outcome === "won" && outcome.payout > 0) {
+        await chipsService.addBalance(
+          bet.user_id,
+          outcome.payout,
+          bet.game_id,
+          bet.id,
+          client,
+        );
+
+        await gameSessionRepository.updateStats(bet.game_id, bet.user_id, {
+          hands_played: 1,
+          total_won: outcome.payout,
+          client,
+        });
+      } else if (outcome.status === "push") {
+        await chipsService.refundBet(
+          bet.user_id,
+          bet.amount,
+          bet.game_id,
+          betId,
+          client,
+        );
+      }
+
+      return {
+        success: true,
+        bet: resolvedBet,
+      };
+    });
+  }
+
+  async startNewRound(gameId) {
+    return pool.transaction(async (client) => {
+      const game = await gameRepository.findById(gameId);
+      if (!game) {
+        throw new NotFoundError("Game not found");
+      }
+
+      const updatedGame = await gameRepository.incrementRound(gameId, client);
+
+      if (game.status === "waiting") {
+        await gameRepository.startGame(gameId, client);
+      }
+
+      return {
+        success: true,
+        currentRound: updatedGame.current_round,
+      };
+    });
+  }
+
+  async endGame(gameId) {
+    return pool.transaction(async (client) => {
+      await gameRepository.endGame(gameId, client);
+
+      const sessions = await gameSessionRepository.findByGameId(gameId);
+      for (const session of sessions) {
+        if (session.status === "active") {
+          await gameSessionRepository.updateStatus(
+            gameId,
+            session.user_id,
+            "left",
+            client,
+          );
+        }
+      }
+
+      return { success: true };
     });
   }
 }
