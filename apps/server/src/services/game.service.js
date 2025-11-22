@@ -32,7 +32,7 @@ class GameService {
       throw new BadRequestError("Min bet must be at least 10 chips");
     }
 
-    const game = await gameRepository.createGame({
+    const game = await gameRepository.create({
       host_id: hostId,
       game_type: gameData.gameType,
       max_players: gameData.maxPlayers,
@@ -88,7 +88,10 @@ class GameService {
         throw new ForbiddenError("Game is full");
       }
 
-      const position = gameSessionRepository.getNextPosition(gameId, client);
+      const position = await gameSessionRepository.getNextPosition(
+        gameId,
+        client,
+      );
 
       const session = await gameSessionRepository.createSession(
         {

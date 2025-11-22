@@ -3,6 +3,8 @@ import { useAuth } from "../hooks/useAuth";
 export default function Profile() {
   const { user } = useAuth();
 
+  console.log("User data:", user);
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-zinc-950 to-black text-gray-300">
@@ -39,7 +41,7 @@ export default function Profile() {
             <div>
               <h2 className="text-lg text-zinc-400">Account Type</h2>
               <p className="text-xl font-medium text-white">
-                {user.isGuest ? "Guest Account" : "Registered Player"}
+                {user.is_guest ? "Guest Account" : "Registered Player"}
               </p>
             </div>
           </div>

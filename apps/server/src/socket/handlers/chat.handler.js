@@ -1,4 +1,4 @@
-export default function chatHandler(io, socket) {
+export default function chatHandler(socket, io) {
   const { userId, username, isGuest } = socket;
 
   console.log(`Chat handler initialized for user: ${username} (${userId})`);

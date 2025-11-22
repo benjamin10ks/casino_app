@@ -5,7 +5,7 @@ export const up = async (pool) => {
       game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
-      position VARCHAR(50) NOT NULL,
+      position INTEGER,
       status VARCHAR(20) NOT NULL,
 
       hands_played INTEGER DEFAULT 0,

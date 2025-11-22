@@ -9,10 +9,10 @@ class GameRepository {
       RETURNING *`;
 
     const result = await pool.query(sql, [
-      gameData.hostId,
-      gameData.gameType,
-      gameData.maxPlayers,
-      gameData.minBet,
+      gameData.host_id,
+      gameData.game_type,
+      gameData.max_players,
+      gameData.min_bet,
       "waiting",
     ]);
 
@@ -27,12 +27,15 @@ class GameRepository {
 
   async findActiveGames(filters = {}) {
     let sql = `
-      SELECT g.* u.username AS host_username
+    SELECT 
+      g.*, 
+      u.username AS host_username,
       COUNT(DISTINCT gs.user_id) AS player_count
-      FROM games g
-      LEFT JOIN users u ON g.host_id = u.id
-      LEFT JOIN game_sessions gs ON g.id = gs.game_id AND gs.status = 'active';
-      WHERE g.status IN ('waiting', 'in_progress')`;
+    FROM games g
+    LEFT JOIN users u ON g.host_id = u.id
+    LEFT JOIN game_sessions gs ON g.id = gs.game_id AND gs.status = 'active'
+    WHERE g.status IN ('waiting', 'in_progress')
+  `;
 
     const params = [];
     let paramCount = 1;
@@ -46,7 +49,8 @@ class GameRepository {
     sql += `
     GROUP BY g.id, u.username
     ORDER BY g.created_at DESC
-    LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    LIMIT $${paramCount} OFFSET $${paramCount + 1}
+  `;
 
     params.push(filters.limit || 50, filters.offset || 0);
 

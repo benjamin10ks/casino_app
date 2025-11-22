@@ -1,15 +1,15 @@
-import pool from "../database/pool.js";
+import pool from "../database/connection.js";
 import { NotFoundError, ConflictError } from "../utils/errors.js";
 
 class GameSessionRepository {
-  async create(sessionData, client = pool) {
+  async createSession(sessionData, client = pool) {
     const sql = `
-      INSERT INTO game_sessions (game_id, user_id, status, seat_number, balance)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO game_sessions (game_id, user_id, position, status)
+      VALUES ($1, $2, $3, $4)
       RETURNING *`;
 
     try {
-      const result = client.query(sql, [
+      const result = await client.query(sql, [
         sessionData.game_id,
         sessionData.user_id,
         sessionData.position || null,

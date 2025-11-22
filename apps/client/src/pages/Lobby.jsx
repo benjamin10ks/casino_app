@@ -52,6 +52,7 @@ export default function Lobby() {
       (response) => {
         if (response.success) {
           setShowModal(false);
+          console.log("Lobby created");
         } else {
           alert(response.error || "Failed to create lobby");
         }
@@ -185,6 +186,7 @@ export default function Lobby() {
 
                 <button
                   type="submit"
+                  disabled={!connected}
                   className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow transition"
                 >
                   Create Lobby

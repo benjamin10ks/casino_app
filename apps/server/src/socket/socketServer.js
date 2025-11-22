@@ -1,5 +1,6 @@
 import socketAuth from "./middleware/socket.auth.js";
 import chatHandler from "./handlers/chat.handler.js";
+import lobbyHandler from "./handlers/lobby.handler.js";
 
 const socketHandler = (io) => {
   io.use(socketAuth);
@@ -7,7 +8,8 @@ const socketHandler = (io) => {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}, Username: ${socket.username}`);
 
-    chatHandler(io, socket);
+    chatHandler(socket, io);
+    lobbyHandler(socket, io);
 
     socket.on("disconnect", (reason) => {
       console.log(`User disconnected: ${socket.id}, Reason: ${reason}`);
