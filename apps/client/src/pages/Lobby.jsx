@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "../hooks/useSocket";
+import { useNavigate } from "react-router-dom";
 
 export default function Lobby() {
   const { socket, connected } = useSocket();
@@ -10,6 +11,8 @@ export default function Lobby() {
   const [gameType, setGameType] = useState("poker");
   const [minBet, setMinBet] = useState(10);
   const [maxPlayers, setMaxPlayers] = useState(6);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!socket || !connected) return;
@@ -34,8 +37,15 @@ export default function Lobby() {
     };
   }, [socket, connected]);
 
-  function handleJoinGame(gameId) {
-    console.log("Joining game", gameId);
+  function handleJoinGame(gameId, gameType) {
+    if (!connected) return;
+    //socket.emit("game:join", { gameId }, (response) => {
+    //if (response?.success) {
+    navigate(`/game/${gameType}/${gameId}`);
+    //} else {
+    // alert(response?.error || "Failed to join game");
+    //}
+    //});
   }
 
   function handleCreateLobby(e) {
@@ -50,12 +60,18 @@ export default function Lobby() {
         minBet: parseFloat(minBet),
       },
       (response) => {
-        if (response.success) {
-          setShowModal(false);
-          console.log("Lobby created");
-        } else {
+        if (!response.success) {
           alert(response.error || "Failed to create lobby");
+          return;
         }
+        setShowModal(false);
+        console.log("Lobby created");
+        console.log("Create lobby response:", response);
+        const newGameId = response.gameId;
+        console.log("Joining newly created game with ID:", newGameId);
+
+        navigate(`/game/${gameType}/${newGameId}`);
+        console.log("Joined newly created game");
       },
     );
   }
@@ -108,7 +124,7 @@ export default function Lobby() {
 
               <div>
                 <button
-                  onClick={() => handleJoinGame(game.id)}
+                  onClick={() => handleJoinGame(game.id, game.gameType)}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                 >
                   Join

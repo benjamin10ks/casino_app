@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSocket } from "../hooks/useSocket.js";
 import { useAuth } from "../hooks/useAuth.js";
 
-export function useGame(gameId, gameType) {
+export function useGame(gameType, gameId) {
   const { socket, connected } = useSocket();
   const { user, updateBalance } = useAuth();
 
@@ -11,6 +11,7 @@ export function useGame(gameId, gameType) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isInGame, setIsInGame] = useState(false);
+
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!connected || !socket || !gameId) return;
@@ -24,6 +25,7 @@ export function useGame(gameId, gameType) {
         setLoading(false);
         return;
       }
+      console.log("Joined game successfully:", response);
 
       setGameState(response.gameState);
       setPlayers(response.players);

@@ -122,21 +122,20 @@ class GameRepository {
     const result = await client.query(sql, [gameId]);
     return result.rows[0];
   }
-
   async getGameWithPlayers(gameId) {
     const sql = `
     SELECT g.*,
     json_agg(
-        json_build_object(
-          'userId', gs.user_id,
-          'username', u.username,
-          'position', gs.position,
-          'status', gs.status,
-          'handsPlayed', gs.hands_played
-          'totalBet', gs.total_bet
-          'totalWon', gs.total_won
+      json_build_object(
+        'userId', gs.user_id,
+        'username', u.username,
+        'position', gs.position,
+        'status', gs.status,
+        'handsPlayed', gs.hands_played,  -- <-- FIX 1: ADDED COMMA HERE
+        'totalBet', gs.total_bet,       -- <-- FIX 1: ADDED COMMA HERE
+        'totalWon', gs.total_won
       ) ORDER BY gs.position
-    ) FILTER (WHERE gs.user_id IS NOT NULL) AS players
+    ) FILTER (WHERE gs.user_id IS NOT NULL) AS players  
     FROM games g
     LEFT JOIN game_sessions gs ON g.id = gs.game_id AND gs.status = 'active'
     LEFT JOIN users u ON gs.user_id = u.id

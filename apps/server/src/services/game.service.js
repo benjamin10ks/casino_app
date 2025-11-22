@@ -77,7 +77,12 @@ class GameService {
         userId,
       );
       if (existingSession && existingSession.status === "active") {
-        throw new BadRequestError("User already in game");
+        return {
+          success: true,
+          session: existingSession,
+          position: existingSession.position,
+          alreadyInGame: true,
+        };
       }
 
       const playerCount = await gameSessionRepository.countActivePlayers(

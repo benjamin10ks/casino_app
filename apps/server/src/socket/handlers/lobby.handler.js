@@ -45,9 +45,6 @@ export default function lobbyHandler(socket, io) {
       data,
     );
     try {
-      const { gameType, maxPlayers, minBet } = data;
-
-      console.log("CALLING CREATE GAME SERVICE");
       const game = await gameService.createGame({
         hostId: userId,
         gameData: data,

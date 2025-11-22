@@ -3,6 +3,11 @@ import { useGame } from "../hooks/useGame";
 import { useAuth } from "../hooks/useAuth";
 import Chat from "../components/Chat.jsx";
 //import games
+import Poker from "../games/Poker/Poker.jsx";
+import Blackjack from "../games/Blackjack/Blackjack.jsx";
+import Roulette from "../games/Roulette/Roulette.jsx";
+import RideTheBus from "../games/Ridethebus/Ridethebus.jsx";
+import Slots from "../games/Slots/Slots.jsx";
 
 export default function Game() {
   const { gameType, gameId } = useParams();
@@ -85,12 +90,29 @@ export default function Game() {
         {isMyTurn && <p>It's your turn!</p>}
       </div>
 
-      <div className="game-actions">
-        {gameType === "poker" && <div>Poker</div>}
-        {gameType === "blackjack" && <div>blackjack</div>}
-        {gameType === "roulette" && <div>roulette</div>}
-        {gameType === "ride-the-bus" && <div>ride-the-bus</div>}
-        {gameType === "slots" && <div>SLOTS</div>}
+      <div className="game-container">
+        {gameType === "poker" && <Poker />}
+        {gameType === "blackjack" && (
+          <Blackjack
+            gameState={gameState}
+            onPlaceBet={placeBet}
+            onAction={performAction}
+            onNewRound={startNewRound}
+            userBalance={user.balance}
+            isMyTurn={isMyTurn}
+          />
+        )}
+        {gameType === "roulette" && <Roulette />}
+        {gameType === "ride-the-bus" && <RideTheBus />}
+        {gameType === "slots" && <Slots />}
+
+        {!["poker", "blackjack", "roulette", "ride-the-bus", "slots"].includes(
+          gameType,
+        ) && (
+          <div>
+            <h3>Unknown game type: {gameType}</h3>
+          </div>
+        )}
       </div>
       <Chat gameId={gameId} />
     </div>
