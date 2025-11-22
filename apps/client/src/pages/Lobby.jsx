@@ -168,7 +168,7 @@ export default function Lobby() {
                 <input
                   type="number"
                   min="2"
-                  max="12"
+                  max="6"
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2"
                   value={maxPlayers}
                   onChange={(e) => setMaxPlayers(e.target.value)}

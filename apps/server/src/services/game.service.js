@@ -201,7 +201,7 @@ class GameService {
 
       await chipsService.placeBet(userId, betData.amount, gameId, client);
 
-      const bet = await betRepository.createBet(
+      const bet = await betRepository.create(
         {
           user_id: userId,
           game_id: gameId,
