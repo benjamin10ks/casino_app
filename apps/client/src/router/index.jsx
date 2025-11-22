@@ -7,9 +7,6 @@ import Register from "../pages/Register";
 import Lobby from "../pages/Lobby";
 import Game from "../pages/Game";
 import Profile from "../pages/Profile";
-//import History from "../pages/History";
-//import Leaderboard from "../pages/Leaderboard";
-import Chat from "../components/Chat";
 
 const router = createBrowserRouter([
   {
