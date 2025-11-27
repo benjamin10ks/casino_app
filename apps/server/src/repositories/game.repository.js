@@ -13,7 +13,7 @@ class GameRepository {
       gameData.game_type,
       gameData.max_players,
       gameData.min_bet,
-      "waiting",
+      gameData.status,
     ]);
 
     return result.rows[0];

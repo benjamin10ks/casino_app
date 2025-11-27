@@ -2,7 +2,6 @@ import pool from "../database/connection.js";
 import gameRepository from "../repositories/game.repository.js";
 import gameSessionRepository from "../repositories/gameSession.repository.js";
 import betRepository from "../repositories/bet.repository.js";
-import userRepository from "../repositories/user.repository.js";
 import chipsService from "./chips.service.js";
 import {
   NotFoundError,
@@ -10,15 +9,36 @@ import {
   ForbiddenError,
 } from "../utils/errors.js";
 
+import blackjackService from "./games/blackjackjs";
+import pokerService from "./games/poker.js";
+import rouletteService from "./games/roulette.js";
+import slotsService from "./games/slots.js";
+import rideTheBusService from "./games/rideTheBus.js";
+
 class GameService {
+  constructor() {
+    this.gameServices = {
+      blackjack: blackjackService,
+      poker: pokerService,
+      roulette: rouletteService,
+      slots: slotsService,
+      "ride-the-bus": rideTheBusService,
+    };
+  }
+
+  getGameService(gameType) {
+    const service = this.gameServices[gameType];
+    if (!service) {
+      throw new BadRequestError("Unsupported game type");
+    }
+    return service;
+  }
+
   async createGame({ hostId, gameData }) {
-    const validTypes = [
-      "poker",
-      "blackjack",
-      "roulette",
-      "slots",
-      "ride-the-bus",
-    ];
+    const validTypes = this.Object.keys(this.gameServices);
+    if (!validTypes.includes(gameData.gameType)) {
+      throw new BadRequestError("Invalid game type");
+    }
 
     if (!validTypes.includes(gameData.gameType)) {
       throw new BadRequestError("Invalid game type");
@@ -32,11 +52,16 @@ class GameService {
       throw new BadRequestError("Min bet must be at least 10 chips");
     }
 
+    const gameService = this.getGameService(gameData.gameType);
+
+    const initialState = gameService.getInitialGameState(gameData);
+
     const game = await gameRepository.create({
       host_id: hostId,
       game_type: gameData.gameType,
       max_players: gameData.maxPlayers,
       min_bet: gameData.minBet,
+      status: initialState.status || "waiting",
     });
 
     await this.joinGame(game.id, hostId);
@@ -58,6 +83,16 @@ class GameService {
       maxBet: game.max_bet,
       createdAt: game.created_at,
     }));
+  }
+
+  async getGameById(gameId) {
+    const game = await gameRepository.findById(gameId);
+
+    if (!game) {
+      throw new NotFoundError("Game not found");
+    }
+
+    return game;
   }
 
   async joinGame(gameId, userId) {
@@ -107,6 +142,15 @@ class GameService {
         client,
       );
 
+      const gameService = this.getGameService(game.game_type);
+      const updatedState = await gameService.onPlayerJoin(
+        game.game_state,
+        userId,
+        position,
+      );
+
+      await gameRepository.updateGameState(gameId, updatedState, client);
+
       return {
         success: true,
         session,
@@ -130,7 +174,13 @@ class GameService {
         }
       }
 
-      await gameSessionRepository.updateStatus(gameId, userId, "left", client);
+      const gameService = this.getGameService(game.game_type);
+      const updatedState = await gameService.onPlayerLeave(
+        game.game_state,
+        userId,
+      );
+
+      await gameSessionRepository.updateStatus(gameId, updatedState, client);
 
       if (game.host_id === userId && game.status === "waiting") {
         await gameRepository.updateStatus(gameId, "completed", client);
@@ -157,6 +207,12 @@ class GameService {
       game.current_round,
     );
 
+    const gameService = this.getGameService(game.game_type);
+    const playerSpecificState = await gameService.getPlayerView(
+      game.game_state,
+      userId,
+    );
+
     return {
       game: {
         id: game.id,
@@ -164,7 +220,7 @@ class GameService {
         status: game.status,
         currentRound: game.current_round,
         minBet: game.min_bet,
-        gameState: game.game_state,
+        gameState: playerSpecificState,
       },
       players: game.players || [],
       bets: bets.map((bet) => ({
@@ -204,6 +260,9 @@ class GameService {
         throw new BadRequestError(`Bet must be at least ${game.min_bet} chips`);
       }
 
+      const gameService = this.getGameService(game.game_type);
+      await gameService.validateBet(game.game_state, userId, betData);
+
       await chipsService.placeBet(userId, betData.amount, gameId, client);
 
       const bet = await betRepository.create(
@@ -226,6 +285,8 @@ class GameService {
         },
         client,
       );
+
+      await gameRepository.updateGameState(gameId, updatedState, client);
 
       return {
         success: true,
