@@ -15,17 +15,19 @@ export function useChat(gameId = null) {
     if (!socket || !connected || !user) return;
 
     if (gameId) {
-      socket.emit("chat:joinRoom", { gameId }, (response) => {
-        if (response.success) {
+      socket.emit("chat:join", { gameId }, (response) => {
+        if (response && response.status === "ok") {
           setIsInRoom(true);
           console.log("Joined chat room for game:", gameId);
         } else {
-          setError(response.error || "Failed to join chat room");
+          setError(
+            (response && response.message) || "Failed to join chat room",
+          );
         }
       });
     }
 
-    socket.on("chat:newMessage", handleNewMessage);
+    socket.on("chat:message", handleNewMessage);
     socket.on("chat:join", handleUserJoined);
     socket.on("chat:leave", handleUserLeft);
 
@@ -33,7 +35,7 @@ export function useChat(gameId = null) {
       if (gameId) {
         socket.emit("chat:leave", { gameId });
       }
-      socket.off("chat:newMessage", handleNewMessage);
+      socket.off("chat:message", handleNewMessage);
       socket.off("chat:join", handleUserJoined);
       socket.off("chat:leave", handleUserLeft);
 
@@ -67,7 +69,7 @@ export function useChat(gameId = null) {
   const sendMessage = useCallback(
     (message, callback) => {
       if (!socket || !isInRoom) {
-        callback?.({ succes: false, error: "Not connected to chat room" });
+        callback?.({ success: false, error: "Not connected to chat room" });
         return;
       }
       if (!message || message.trim() === "") {
@@ -76,7 +78,15 @@ export function useChat(gameId = null) {
       }
 
       if (gameId) {
-        socket.emit("chat:message", { gameId, message }, callback);
+        socket.emit("chat:message", { gameId, message }, (resp) => {
+          const success =
+            resp && (resp.success === true || resp.status === "ok");
+          if (success) {
+            callback?.({ success: true, resp });
+          } else {
+            callback?.({ success: false, error: resp && resp.message });
+          }
+        });
       }
     },
     [socket, isInRoom, gameId],

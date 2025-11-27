@@ -22,7 +22,7 @@ export default function gameHandler(socket, io) {
         `User joined game: ${username} (${userId}) in game ${gameId} at ${result.position}`,
       );
 
-      const gameState = await gameService.getGameState(gameId);
+      const gameState = await gameService.getGameState(gameId, userId);
 
       socket.broadcast.to(`game:${gameId}`).emit("game:playerJoined", {
         userId,

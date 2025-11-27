@@ -28,7 +28,7 @@ export function useGame(gameType, gameId) {
       console.log("Joined game successfully:", response);
 
       setGameState(response.gameState);
-      setPlayers(response.players);
+      setPlayers(response.gameState.players);
       setIsInGame(true);
       setLoading(false);
     });
@@ -56,7 +56,7 @@ export function useGame(gameType, gameId) {
 
       setIsInGame(false);
     };
-  }, [connected, socket, gameId, isInGame]);
+  }, [connected, socket, gameId]);
   /* eslint-enable react-hooks/exhaustive-deps */
   const handleGameUpdate = useCallback((data) => {
     console.log("Game update received:", data);
@@ -65,15 +65,27 @@ export function useGame(gameType, gameId) {
 
   const handlePlayerJoined = useCallback((data) => {
     console.log("Player joined:", data);
-    setPlayers((prev) => {
-      if (prev.find((p) => p.id === data.userId)) return prev;
-      return [...prev, data.player];
+    setPlayers((prev = []) => {
+      if (prev.find((p) => p.userId === data.userId)) return prev;
+      return [
+        ...prev,
+        {
+          id: data.userId,
+          userId: data.userId,
+          username: data.username,
+          position: data.position,
+          status: "active",
+          handsPlayed: 0,
+          totalBet: 0,
+          totalWon: 0,
+        },
+      ];
     });
   }, []);
 
   const handlePlayerLeft = useCallback((data) => {
     console.log("Player left:", data);
-    setPlayers((prev) => prev.filter((p) => p.id !== data.userId));
+    setPlayers((prev = []) => prev.filter((p) => p.userId !== data.userId));
   }, []);
 
   const handleBetPlaced = useCallback((data) => {
@@ -141,7 +153,7 @@ export function useGame(gameType, gameId) {
       socket.emit("game:leave", { gameId });
       setIsInGame(false);
     }
-  }, [socket, isInGame, gameId]);
+  }, [connected, socket, gameId]);
 
   const startNewRound = useCallback(
     (callback) => {
@@ -156,6 +168,9 @@ export function useGame(gameType, gameId) {
     [socket, connected],
   );
 
+  console.log("GameState:", gameState);
+  console.log("User:", user);
+
   return {
     gameState,
     players,
@@ -168,7 +183,12 @@ export function useGame(gameType, gameId) {
     leaveGame,
     startNewRound,
 
-    isMyTurn: gameState?.currentPlayer === user?.id,
-    myPlayerData: players.find((p) => p.id === user?.id),
+    isMyTurn: (() => {
+      const uid = user?.id ?? user?.userId ?? null;
+      return gameState?.currentPlayer === uid;
+    })(),
+    myPlayerData: (players || []).find(
+      (p) => p.id === (user?.id ?? user?.userId),
+    ),
   };
 }

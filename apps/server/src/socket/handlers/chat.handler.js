@@ -5,7 +5,7 @@ export default function chatHandler(socket, io) {
 
   socket.on("chat:join", (data, callback) => {
     try {
-      const { gameId } = socket.handshake.query;
+      const { gameId } = data;
       if (!gameId) {
         throw new Error("gameId is required");
       }
@@ -90,10 +90,11 @@ export default function chatHandler(socket, io) {
 
   function handleChatLeave() {
     const username = socket.username;
-
-    socket.broadcast.emit("chat:message", {
-      username,
-      message: `${username} has left the chat.`,
+    socket.gameChats?.forEach((roomName) => {
+      socket.broadcast.to(roomName).emit("chat:message", {
+        username,
+        message: `${username} has left the chat.`,
+      });
     });
   }
 }

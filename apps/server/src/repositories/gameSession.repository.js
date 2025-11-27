@@ -12,7 +12,7 @@ class GameSessionRepository {
       const result = await client.query(sql, [
         sessionData.game_id,
         sessionData.user_id,
-        sessionData.position || null,
+        sessionData.position ?? null,
         "active",
       ]);
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useChat } from "../hooks/useChat.js";
 import { useAuth } from "../hooks/useAuth.js";
 
-export default function Chat(gameId = null) {
+export default function Chat({ gameId = null }) {
   const { user } = useAuth();
 
   const { messages, isInRoom, connected, sendMessage } = useChat(gameId);
@@ -78,9 +78,13 @@ export default function Chat(gameId = null) {
           {messages.map((msg, i) => (
             <div key={i} className="mb-1">
               <span className="font-semibold text-blue-300">
-                {user.username}:
+                {msg.username ??
+                  msg.userId ??
+                  (msg.type === "system" ? "System" : user.username)}
               </span>{" "}
-              <span className="text-gray-200">{msg.text}</span>
+              <span className="text-gray-200">
+                {msg.message ?? msg.text ?? String(msg)}
+              </span>
             </div>
           ))}
 
