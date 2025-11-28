@@ -19,6 +19,8 @@ Ideas
 
 While in the casino_app directory:
 
+create a `.env` file based on the `.env.example` file in apps/server
+
 `npm install` to install dependencies
 
 NEED TO FIGURE OUT AUTO MIGRATIONS FOR POSTGRES
