@@ -9,20 +9,20 @@ import {
   ForbiddenError,
 } from "../utils/errors.js";
 
-import blackjackService from "./games/blackjackjs";
-import pokerService from "./games/poker.js";
-import rouletteService from "./games/roulette.js";
-import slotsService from "./games/slots.js";
-import rideTheBusService from "./games/rideTheBus.js";
+import BlackjackGame from "./games/blackjack.js";
+//import pokerService from "./games/poker.js";
+//import rouletteService from "./games/roulette.js";
+//import slotsService from "./games/slots.js";
+//import rideTheBusService from "./games/rideTheBus.js";
 
 class GameService {
   constructor() {
     this.gameServices = {
-      blackjack: blackjackService,
-      poker: pokerService,
-      roulette: rouletteService,
-      slots: slotsService,
-      "ride-the-bus": rideTheBusService,
+      blackjack: BlackjackGame,
+      //    poker: pokerService,
+      //   roulette: rouletteService,
+      //  slots: slotsService,
+      //  "ride-the-bus": rideTheBusService,
     };
   }
 
@@ -35,7 +35,7 @@ class GameService {
   }
 
   async createGame({ hostId, gameData }) {
-    const validTypes = this.Object.keys(this.gameServices);
+    const validTypes = Object.keys(this.gameServices);
     if (!validTypes.includes(gameData.gameType)) {
       throw new BadRequestError("Invalid game type");
     }
@@ -54,7 +54,7 @@ class GameService {
 
     const gameService = this.getGameService(gameData.gameType);
 
-    const initialState = gameService.getInitialGameState(gameData);
+    const initialState = gameService.createInitialState(gameData);
 
     const game = await gameRepository.create({
       host_id: hostId,
@@ -63,6 +63,8 @@ class GameService {
       min_bet: gameData.minBet,
       status: initialState.status || "waiting",
     });
+
+    await gameRepository.updateGameState(game.id, initialState);
 
     await this.joinGame(game.id, hostId);
 
@@ -143,7 +145,7 @@ class GameService {
       );
 
       const gameService = this.getGameService(game.game_type);
-      const updatedState = await gameService.onPlayerJoin(
+      const updatedState = await gameService.onPlayerJoined(
         game.game_state,
         userId,
         position,
@@ -175,7 +177,7 @@ class GameService {
       }
 
       const gameService = this.getGameService(game.game_type);
-      const updatedState = await gameService.onPlayerLeave(
+      const updatedState = await gameService.onPlayerLeft(
         game.game_state,
         userId,
       );

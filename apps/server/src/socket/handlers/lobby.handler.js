@@ -70,7 +70,7 @@ export default function lobbyHandler(socket, io) {
       }
     } catch (error) {
       console.error(
-        "Error creating game by user ${username} (${userId}):",
+        `Error creating game by user ${username} (${userId}):`,
         error,
       );
       if (callback) {
