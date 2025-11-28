@@ -32,10 +32,13 @@ export default function Blackjack({
     });
   };
 
-  const handleAction = (action) => {
-    onAction(action, (response) => {
-      if (!response.success)
+  // Use actionData = null for simple actions; callback optional
+  const handleAction = (action, callback) => {
+    onAction(action, null, (response) => {
+      if (!response.success) {
         alert(`Error performing action: ${response.message}`);
+      }
+      callback?.(response);
     });
   };
 

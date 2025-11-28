@@ -1,5 +1,12 @@
 export default function chatHandler(socket, io) {
-  const { userId, username, isGuest } = socket;
+  // Coerce username to a primitive string to avoid sending objects to clients
+  const { userId, isGuest } = socket;
+  const username =
+    typeof socket.username === "string"
+      ? socket.username
+      : socket.user && typeof socket.user.username === "string"
+      ? socket.user.username
+      : String((socket && socket.username) || "Unknown");
 
   console.log(`Chat handler initialized for user: ${username} (${userId})`);
 
@@ -21,10 +28,13 @@ export default function chatHandler(socket, io) {
 
       console.log(`${username} joined chat room: ${roomName}`);
 
+      // Broadcast a system join message so clients can render it as text
       socket.broadcast.to(roomName).emit("chat:message", {
         userId,
-        username,
+        username: String(username),
         gameId,
+        type: "system",
+        message: `${String(username)} has joined the chat.`,
         timestamp: new Date().toISOString(),
       });
 
@@ -63,7 +73,8 @@ export default function chatHandler(socket, io) {
 
       const chatMessage = {
         userId,
-        username,
+        // ensure username is a string
+        username: String(username),
         message: message.trim(),
         gameId,
         isGuest,
@@ -89,11 +100,18 @@ export default function chatHandler(socket, io) {
   socket.on("disconnect", handleChatLeave);
 
   function handleChatLeave() {
+    // Broadcast a system leave message so clients render left notices properly
     const username = socket.username;
-    socket.gameChats?.forEach((roomName) => {
+    // Prevent double-broadcast by taking a snapshot and clearing the set
+    const rooms = Array.from(socket.gameChats || []);
+    socket.gameChats = new Set();
+    rooms.forEach((roomName) => {
       socket.broadcast.to(roomName).emit("chat:message", {
+        userId: socket.userId,
         username,
+        type: "system",
         message: `${username} has left the chat.`,
+        timestamp: new Date().toISOString(),
       });
     });
   }

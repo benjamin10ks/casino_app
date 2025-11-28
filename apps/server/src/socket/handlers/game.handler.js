@@ -31,11 +31,7 @@ export default function gameHandler(socket, io) {
         playerCount: gameState.players.length,
       });
 
-      io.to(`game:${gameId}`).emit("game:update", {
-        game: gameState,
-        players: gameState.players,
-        bets: gameState.bets,
-      });
+      io.to(`game:${gameId}`).emit("game:update", { gameState });
 
       io.to("lobby").emit("lobby:gameUpdated", {
         gameId,
@@ -135,6 +131,16 @@ export default function gameHandler(socket, io) {
         betId: result.bet.id,
       });
 
+      // After placing a bet, broadcast canonical game state so clients can sync
+      try {
+        const updatedState = await gameService.getGameState(gameId, userId);
+        io.to(`game:${gameId}`).emit("game:update", {
+          gameState: updatedState,
+        });
+      } catch (err) {
+        console.error("Failed to fetch game state after bet:", err);
+      }
+
       if (callback) {
         callback({ success: true, betId: result.bet.id });
       }
@@ -162,15 +168,43 @@ export default function gameHandler(socket, io) {
         `${username} (${userId}) performed action in game ${gameId}: ${action}`,
       );
 
-      io.to(`game:${gameId}`).emit("game:actionPerformed", {
-        userId,
-        username,
-        action,
-        actionData,
-      });
+      // Process the action via server-side game logic
+      try {
+        const result = await gameService.performAction(
+          gameId,
+          userId,
+          action,
+          actionData,
+        );
 
-      if (callback) {
-        callback({ success: true });
+        // Broadcast canonical updated gameState
+        try {
+          const updatedState = await gameService.getGameState(gameId, userId);
+          io.to(`game:${gameId}`).emit("game:update", {
+            gameState: updatedState,
+          });
+        } catch (err) {
+          console.error("Failed to fetch game state after action:", err);
+        }
+
+        // Emit bet resolutions so clients can update balances and UI
+        if (result.resolutions && result.resolutions.length > 0) {
+          for (const res of result.resolutions) {
+            io.to(`game:${gameId}`).emit("game:betResolved", {
+              betId: res.betId,
+              outcome: res.outcome,
+            });
+          }
+        }
+
+        if (callback) {
+          callback({ success: true, result });
+        }
+      } catch (err) {
+        console.error("Error processing action via gameService:", err);
+        if (callback) {
+          callback({ success: false, error: err.message });
+        }
       }
     } catch (error) {
       console.error("Error performing action:", error);
@@ -191,13 +225,20 @@ export default function gameHandler(socket, io) {
         throw new Error("No active game");
       }
 
-      const result = await gameService.startNewRound(gameId, userId);
+      // Start a new round on the server
+      const result = await gameService.startNewRound(gameId);
 
       console.log(`New round started in game ${gameId}`);
 
-      io.to(`game:${gameId}`).emit("game:roundStarted", {
-        roundNumber: result.currentNumber,
-      });
+      // Broadcast canonical updated game state after new round
+      try {
+        const updatedState = await gameService.getGameState(gameId, userId);
+        io.to(`game:${gameId}`).emit("game:update", {
+          gameState: updatedState,
+        });
+      } catch (err) {
+        console.error("Failed to fetch game state after new round:", err);
+      }
 
       if (callback) {
         callback({ success: true, currentRound: result.currentRound });
@@ -222,7 +263,8 @@ export default function gameHandler(socket, io) {
         throw new Error("No active game");
       }
 
-      io.to(`game:${gameId}`).emit("game:stateUpdated", gameState);
+      // Treat incoming state update as canonical and broadcast to room
+      io.to(`game:${gameId}`).emit("game:update", { gameState });
 
       if (callback) {
         callback({ success: true });

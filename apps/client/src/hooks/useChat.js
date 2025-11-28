@@ -15,29 +15,16 @@ export function useChat(gameId = null) {
     if (!socket || !connected || !user) return;
 
     if (gameId) {
-      socket.emit("chat:join", { gameId }, (response) => {
-        if (response && response.status === "ok") {
-          setIsInRoom(true);
-          console.log("Joined chat room for game:", gameId);
-        } else {
-          setError(
-            (response && response.message) || "Failed to join chat room",
-          );
-        }
-      });
+      setIsInRoom(true);
     }
 
     socket.on("chat:message", handleNewMessage);
-    socket.on("chat:join", handleUserJoined);
-    socket.on("chat:leave", handleUserLeft);
 
     return () => {
       if (gameId) {
         socket.emit("chat:leave", { gameId });
       }
       socket.off("chat:message", handleNewMessage);
-      socket.off("chat:join", handleUserJoined);
-      socket.off("chat:leave", handleUserLeft);
 
       setIsInRoom(false);
     };

@@ -10,6 +10,7 @@ export default function SocketProvider({ children }) {
   const { user } = useAuth();
 
   useEffect(() => {
+    // If no user is present, clean up any existing socket
     if (!user) {
       if (socket) {
         socket.disconnect();
@@ -21,17 +22,28 @@ export default function SocketProvider({ children }) {
 
     const token = localStorage.getItem("token");
 
+    // Create a new socket connection with auth and username
     const newSocket = io(
       import.meta.env.VITE_SOCKET_URL || "http://localhost:3000",
       {
         auth: { token },
         query: { username: user.username },
+        autoConnect: true,
       },
     );
 
+    // Update local connection flag on connect
     newSocket.on("connect", () => {
       console.log("Socket connected");
       setConnected(true);
+
+      // If a previous game id was persisted, set it locally but do not auto-emit join
+      // to avoid duplicate join flows; let the Game hook perform the authoritative join
+      const pendingGameId = localStorage.getItem("currentGameId");
+      if (pendingGameId) {
+        newSocket.currentGameId = pendingGameId;
+        console.log("Found pendingGameId, will not auto-rejoin:", pendingGameId);
+      }
     });
 
     newSocket.on("disconnect", () => {
@@ -42,8 +54,9 @@ export default function SocketProvider({ children }) {
     newSocket.on("connect_error", (err) => {
       console.error("Socket connection error:", err);
       if (
-        err.message.includes("Authentication") ||
-        err.message.includes("token")
+        err.message &&
+        (err.message.includes("Authentication") ||
+          err.message.includes("token"))
       ) {
         console.log("Authentication failed, login again.");
       }

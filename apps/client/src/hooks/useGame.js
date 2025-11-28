@@ -12,6 +12,28 @@ export function useGame(gameType, gameId) {
   const [error, setError] = useState(null);
   const [isInGame, setIsInGame] = useState(false);
 
+  // Normalize server payloads into a flat game state that's easy for UI to consume
+  const normalizePayload = (payload) => {
+    const wrapper = payload?.game || payload || {};
+    const players = payload?.players || payload?.game?.players || [];
+    const mySession = payload?.mySession || null;
+
+    const innerState = wrapper.gameState || wrapper.game_state || payload?.gameState || payload?.game_state || wrapper;
+
+    const normalized = {
+      // copy wrapper-level metadata
+      id: wrapper.id ?? wrapper.gameId ?? null,
+      status: wrapper.status ?? innerState.status ?? null,
+      type: wrapper.game_type ?? wrapper.type ?? null,
+      currentRound: wrapper.current_round ?? wrapper.currentRound ?? null,
+      minBet: wrapper.min_bet ?? wrapper.minBet ?? null,
+      // spread inner game state last so inner keys (dealer, players, deck) are top-level
+      ...(innerState || {}),
+    };
+
+    return { normalized, players, mySession };
+  };
+
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!connected || !socket || !gameId) return;
@@ -19,6 +41,7 @@ export function useGame(gameType, gameId) {
     setLoading(true);
     setError(null);
 
+    // join the game and persist the current game id locally and on the socket
     socket.emit("game:join", { gameId }, (response) => {
       if (!response.success) {
         setError(response.error || "Failed to join game");
@@ -27,23 +50,40 @@ export function useGame(gameType, gameId) {
       }
       console.log("Joined game successfully:", response);
 
-      setGameState(response.gameState);
-      setPlayers(response.gameState.players);
+      // normalize and store game state returned from server
+      const { normalized, players: payloadPlayers, mySession } = normalizePayload(response.gameState || response);
+      setGameState(normalized);
+      setPlayers(payloadPlayers || []);
       setIsInGame(true);
       setLoading(false);
+
+      // store current game id for reconnection and convenience
+      try {
+        socket.currentGameId = gameId;
+        localStorage.setItem("currentGameId", gameId);
+      } catch (err) {
+        console.warn("Failed to persist currentGameId:", err);
+      }
     });
 
     socket.on("game:update", handleGameUpdate);
     socket.on("game:playerJoined", handlePlayerJoined);
     socket.on("game:playerLeft", handlePlayerLeft);
     socket.on("game:betPlaced", handleBetPlaced);
-    socket.on("game:payout", handleGameEnded);
+    socket.on("game:betResolved", handleBetResolved);
+    socket.on("game:payout", handlePayout);
     socket.on("game:ended", handleGameEnded);
     socket.on("game:error", handleGameError);
+    socket.on("game:stateUpdated", handleGameUpdate);
 
     return () => {
       if (socket && isInGame) {
         socket.emit("game:leave", { gameId });
+        try {
+          localStorage.removeItem("currentGameId");
+        } catch (err) {
+          console.warn("Failed to remove currentGameId", err);
+        }
       }
 
       socket.off("game:update", handleGameUpdate);
@@ -53,6 +93,7 @@ export function useGame(gameType, gameId) {
       socket.off("game:payout", handlePayout);
       socket.off("game:ended", handleGameEnded);
       socket.off("game:error", handleGameError);
+      socket.off("game:stateUpdated", handleGameUpdate);
 
       setIsInGame(false);
     };
@@ -60,7 +101,10 @@ export function useGame(gameType, gameId) {
   /* eslint-enable react-hooks/exhaustive-deps */
   const handleGameUpdate = useCallback((data) => {
     console.log("Game update received:", data);
-    setGameState(data.gameState);
+    const payload = data?.gameState ? data : { game: data };
+    const { normalized, players: payloadPlayers } = normalizePayload(payload);
+    setGameState(normalized);
+    if (payloadPlayers && payloadPlayers.length) setPlayers(payloadPlayers);
   }, []);
 
   const handlePlayerJoined = useCallback((data) => {
@@ -91,6 +135,7 @@ export function useGame(gameType, gameId) {
   const handleBetPlaced = useCallback((data) => {
     console.log("Bet placed:", data);
     setGameState((prev) => ({
+      ...(prev || {}),
       currentBets: { ...prev?.currentBets, [data.userId]: data.bet },
     }));
   }, []);
@@ -101,6 +146,31 @@ export function useGame(gameType, gameId) {
       updateBalance(data.newBalance);
     },
     [updateBalance],
+  );
+
+  // update local state when a bet resolution happens; server will emit payout separately
+  const handleBetResolved = useCallback(
+    (data) => {
+      console.log("Bet resolved:", data);
+      // if this resolution affects the current user, update their balance
+      const uid = user?.id ?? user?.userId;
+      if (data.outcome && uid === data.userId) {
+        // outcome.payout should be added to existing balance
+        const payout = data.outcome.payout || 0;
+        updateBalance((user?.balance || 0) + payout);
+      }
+
+      // Also update gameState to mark bet as resolved if present
+      setGameState((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev };
+        if (next.bets) {
+          next.bets = next.bets.map((b) => (b.id === data.betId ? { ...b, resolved: true, outcome: data.outcome } : b));
+        }
+        return next;
+      });
+    },
+    [updateBalance, user],
   );
 
   const handleGameEnded = useCallback((data) => {
@@ -124,9 +194,9 @@ export function useGame(gameType, gameId) {
         return;
       }
 
-      socket.emit("game:placeBet", betData, (response) => {
+      socket.emit("game:placeBet", { ...betData, gameId }, (response) => {
         if (response.success) {
-          updateBalance(user.balance - betData.amount);
+          updateBalance((user?.balance || 0) - betData.amount);
         }
         callback?.(response);
       });
@@ -135,17 +205,17 @@ export function useGame(gameType, gameId) {
   );
 
   const performAction = useCallback(
-    (action, callback) => {
+    (action, actionData = null, callback) => {
       if (!socket || !connected) {
         callback?.({ success: false, error: "Not connected to server" });
         return;
       }
 
-      socket.emit("game:action", { action }, (response) => {
+      socket.emit("game:action", { gameId, action, actionData }, (response) => {
         callback?.(response);
       });
     },
-    [socket, connected],
+    [socket, connected, gameId],
   );
 
   const leaveGame = useCallback(() => {
@@ -161,7 +231,7 @@ export function useGame(gameType, gameId) {
         callback?.({ success: false, error: "Not connected to server" });
         return;
       }
-      socket.emit("game:startNewRound", {}, (response) => {
+      socket.emit("game:newRound", { gameId }, (response) => {
         callback?.(response);
       });
     },
