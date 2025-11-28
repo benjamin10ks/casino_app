@@ -178,7 +178,8 @@ class GameService {
         userId,
       );
 
-      await gameSessionRepository.updateStatus(gameId, updatedState, client);
+      // mark the user's session as left
+      await gameSessionRepository.updateStatus(gameId, userId, "left", client);
 
       if (game.host_id === userId && game.status === "waiting") {
         await gameRepository.updateStatus(gameId, "completed", client);
@@ -363,11 +364,7 @@ class GameService {
       throw new BadRequestError("Bet already resolved");
     }
 
-    const resolvedBet = await betRepository.updateBetStatus(
-      betId,
-      outcome,
-      client,
-    );
+    const resolvedBet = await betRepository.resolveBet(betId, outcome, client);
 
     if (outcome === "won" && outcome.payout > 0) {
       await chipsService.addBalance(

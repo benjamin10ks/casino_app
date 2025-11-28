@@ -33,9 +33,13 @@ export default function Blackjack({
     });
   };
 
-  // Use actionData = null for simple actions; callback optional
+  // Use actionData for certain actions (double needs amount); callback optional
   const handleAction = (action, callback) => {
-    onAction(action, null, (response) => {
+    let actionData = null;
+    if (action === "double") actionData = { amount: currentBet };
+    if (action === "split") actionData = {}; // future split details can go here
+
+    onAction(action, actionData, (response) => {
       console.log("Action response:", response);
       if (!response.success) {
         alert(`Error performing action: ${response.message}`);
@@ -159,7 +163,7 @@ export default function Blackjack({
           </div>
         )}
 
-        {status === "playing" && isMyTurn && (
+        {status === "in_progress" && isMyTurn && (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => handleAction("hit")}
@@ -196,11 +200,11 @@ export default function Blackjack({
           </div>
         )}
 
-        {status === "playing" && !isMyTurn && (
+        {status === "in_progress" && !isMyTurn && (
           <p className="italic text-gray-300">Waiting for your turn...</p>
         )}
 
-        {status === "finished" && (
+        {status === "completed" && (
           <div className="bg-gray-700 p-4 rounded-lg space-y-2">
             <h3
               className={`font-bold text-lg text-${result?.outcome === "win" ? "green" : result?.outcome === "lose" ? "red" : "yellow"}-400`}

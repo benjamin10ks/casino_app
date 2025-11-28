@@ -66,24 +66,42 @@ class BlackjackGame extends BaseGame {
   }
 
   async onBetPlaced(gameState, userId, betId, betData) {
+    const ts = new Date().toISOString();
+    console.log(`[${ts}] onBetPlaced called for user ${userId} betId ${betId} amount ${betData?.amount}`);
+
     const player = gameState.players[userId];
+    if (!player) {
+      console.log(`[${ts}] onBetPlaced: player ${userId} not found in gameState.players`);
+      return gameState;
+    }
+
     player.bet = betData.amount;
     player.betId = betId;
     player.hasBet = true;
     player.status = "waiting";
 
+    const playersList = Object.entries(gameState.players).map(([id, p]) => ({ id, hasBet: !!p.hasBet, bet: p.bet, betId: p.betId, status: p.status }));
+    console.log(`[${ts}] onBetPlaced: players after placing bet:`, playersList);
+
     const allPlayersReady = Object.values(gameState.players).every(
       (player) => player.hasBet,
     );
 
+    console.log(`[${ts}] onBetPlaced: allPlayersReady=${allPlayersReady} playerCount=${Object.keys(gameState.players).length}`);
+
     if (allPlayersReady && Object.keys(gameState.players).length > 0) {
+      console.log(`[${ts}] onBetPlaced: all players ready, dealing initial cards`);
       // start the round by dealing initial cards
       gameState = await this.dealInitialCards(gameState);
+      console.log(`[${ts}] onBetPlaced: dealInitialCards completed; roundActive=${gameState.roundActive}`);
     }
     return gameState;
   }
 
   async dealInitialCards(gameState) {
+    const ts = new Date().toISOString();
+    console.log(`[${ts}] dealInitialCards: starting; playerCount=${Object.keys(gameState.players).length}`);
+
     gameState.deck = this.createDeck();
     gameState.deck = this.shuffleDeck(gameState.deck);
 
@@ -112,6 +130,7 @@ class BlackjackGame extends BaseGame {
     gameState.roundActive = true;
     gameState.currentPlayerIndex = 0;
 
+    console.log(`[${ts}] dealInitialCards: completed; dealerHandCount=${gameState.dealer.hand.length}`);
     return gameState;
   }
 
@@ -194,17 +213,25 @@ class BlackjackGame extends BaseGame {
   }
 
   async dealerTurn(gameState) {
+    const ts = new Date().toISOString();
+    console.log(`[${ts}] dealerTurn: starting; dealerValue=${gameState.dealer.value} dealerHandLength=${gameState.dealer.hand.length}`);
     while (gameState.dealer.value < 17) {
-      gameState.dealer.hand.push(this.drawCard(gameState.deck));
+      const card = this.drawCard(gameState.deck);
+      console.log(`[${ts}] dealerTurn: drawing card ${card.rank}${card.suit}`);
+      gameState.dealer.hand.push(card);
       gameState.dealer.value = this.calculateHandValue(gameState.dealer.hand);
+      console.log(`[${ts}] dealerTurn: new dealerValue=${gameState.dealer.value}`);
     }
 
     gameState.dealer.isStanding = true;
+    console.log(`[${ts}] dealerTurn: completed; dealerValue=${gameState.dealer.value} isStanding=${gameState.dealer.isStanding}`);
 
     return gameState;
   }
 
   async resolveBets(gameState) {
+    const ts = new Date().toISOString();
+    console.log(`[${ts}] resolveBets: dealerValue=${gameState.dealer.value} dealerHandLength=${gameState.dealer.hand.length}`);
     const resolutions = [];
     const dealerValue = gameState.dealer.value;
     const dealerBusted = dealerValue > 21;
@@ -213,6 +240,7 @@ class BlackjackGame extends BaseGame {
       const player = gameState.players[userId];
 
       if (player.status === "busted") {
+        console.log(`[${ts}] resolveBets: player ${userId} busted, skipping`);
         continue;
       }
 
@@ -238,6 +266,7 @@ class BlackjackGame extends BaseGame {
         outcome = { status: "lose", payout: 0, multiplier: 0 };
       }
 
+      console.log(`[${ts}] resolveBets: player ${userId} outcome=`, outcome);
       resolutions.push({
         betId: player.betId,
         outcome,

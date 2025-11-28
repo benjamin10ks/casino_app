@@ -35,6 +35,69 @@ export function useGame(gameType, gameId) {
         bets,
       };
 
+      // add convenience mappings for Blackjack UI
+      try {
+        const gameTypeLower = (normalized.type || "").toLowerCase();
+        if (gameTypeLower === "blackjack") {
+          const uid = user?.id ?? user?.userId ?? null;
+          // innerState contains dealer and players map
+          const dealer = innerState?.dealer || null;
+          const playerMap = innerState?.players || {};
+
+          // keep raw dealer state and map dealer hand to UI-friendly shape
+          normalized.dealer = dealer || null;
+          if (dealer) {
+            normalized.dealerHand = {
+              cards: dealer.hand || [],
+              total: dealer.value ?? null,
+              isStanding: dealer.isStanding ?? false,
+            };
+            // hide second card if roundActive is true
+            if (
+              innerState?.roundActive &&
+              normalized.dealerHand.cards?.length > 1
+            ) {
+              normalized.dealerHand.cards = [
+                normalized.dealerHand.cards[0],
+                { hidden: true },
+              ];
+            }
+          } else {
+            normalized.dealerHand = null;
+          }
+
+          // map player hand for current user
+          const myPlayer = playerMap[uid] || null;
+          if (myPlayer) {
+            normalized.playerHand = {
+              cards: myPlayer.hand || [],
+              total: myPlayer.value ?? null,
+              isBlackjack: myPlayer.status === "blackjack",
+              isBusted: myPlayer.status === "busted",
+            };
+          } else {
+            normalized.playerHand = null;
+          }
+
+          normalized.currentPlayerIndex =
+            innerState?.currentPlayerIndex ?? innerState?.currentPlayer ?? null;
+          normalized.currentPlayer = null;
+          if (
+            normalized.currentPlayerIndex != null &&
+            Array.isArray(playersList)
+          ) {
+            const found = playersList.find(
+              (p) => p.position === normalized.currentPlayerIndex,
+            );
+            normalized.currentPlayer = found ? found.userId : null;
+          }
+
+          normalized.currentBet = myPlayer?.bet || 0;
+        }
+      } catch (err) {
+        console.warn("Error adding game-specific fields:", err);
+      }
+
       return { normalized, players: playersList, mySession };
     }
 
@@ -137,9 +200,11 @@ export function useGame(gameType, gameId) {
   }, [connected, socket, gameId]);
   /* eslint-enable react-hooks/exhaustive-deps */
   const handleGameUpdate = useCallback((data) => {
+    console.log("Raw game update payload:", data);
     console.log("Game update received:", data);
     const payload = data?.gameState ? data : { game: data };
     const { normalized, players: payloadPlayers } = normalizePayload(payload);
+    console.log("Normalized payload:", normalized, "players:", payloadPlayers);
     setGameState(normalized);
     if (payloadPlayers && payloadPlayers.length) setPlayers(payloadPlayers);
   }, []);
