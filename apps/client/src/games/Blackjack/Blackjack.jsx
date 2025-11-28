@@ -27,6 +27,7 @@ export default function Blackjack({
     }
     setIsPlacingBet(true);
     onPlaceBet({ amount: betAmount }, (response) => {
+      console.log("Place bet response:", response);
       setIsPlacingBet(false);
       if (!response.success) alert(`Error placing bet: ${response.message}`);
     });
@@ -35,6 +36,7 @@ export default function Blackjack({
   // Use actionData = null for simple actions; callback optional
   const handleAction = (action, callback) => {
     onAction(action, null, (response) => {
+      console.log("Action response:", response);
       if (!response.success) {
         alert(`Error performing action: ${response.message}`);
       }
@@ -44,6 +46,7 @@ export default function Blackjack({
 
   const handleNewRound = () => {
     onNewRound((response) => {
+      console.log("New round response:", response);
       if (!response.success)
         alert(`Error starting new round: ${response.message}`);
     });
@@ -140,6 +143,7 @@ export default function Blackjack({
                 className="w-20 p-1 rounded text-black"
               />
               <button
+                type="button"
                 onClick={handlePlaceBet}
                 disabled={
                   isPlacingBet || betAmount > userBalance || betAmount <= 0

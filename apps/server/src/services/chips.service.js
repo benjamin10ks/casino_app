@@ -4,7 +4,7 @@ import transactionRepository from "../repositories/transaction.repository.js";
 import { BadRequestError, NotFoundError } from "../utils/errors.js";
 
 class ChipsService {
-  async placeBet(userId, amount, gameId, client) {
+  async placeBet(userId, amount, gameId, client = pool) {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User not found");
@@ -17,7 +17,7 @@ class ChipsService {
     }
 
     await client.query(
-      "UPDATE users SET balance = balance - $1 WHERE id = $2 updated_at = CURRENT_TIMESTAMP",
+      "UPDATE users SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
       [amount, userId],
     );
 
@@ -49,7 +49,7 @@ class ChipsService {
     const balanceBefore = parseFloat(user.balance);
 
     await client.query(
-      "UPDATE users SET balance = balance + $1 WHERE id = $2 updated_at = CURRENT_TIMESTAMP",
+      "UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
       [amount, userId],
     );
 
@@ -60,7 +60,7 @@ class ChipsService {
         user_id: userId,
         amount: amount,
         type: "WIN",
-        status: "completeted",
+        status: "completed",
         game_id: gameId,
         bet_id: betId,
         description: `Winnings added from game ${gameId}`,
@@ -82,7 +82,7 @@ class ChipsService {
     const balanceBefore = parseFloat(user.balance);
 
     await client.query(
-      "UPDATE users SET balance = balance + $1 WHERE id = $2 updated_at = CURRENT_TIMESTAMP",
+      "UPDATE users SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
       [amount, userId],
     );
 

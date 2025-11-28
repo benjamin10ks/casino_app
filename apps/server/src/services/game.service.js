@@ -44,12 +44,8 @@ class GameService {
       throw new BadRequestError("Invalid game type");
     }
 
-    if (gameData.maxPlayers < 1 || gameData.maxPlayers > 10) {
+    if (gameData.maxPlayers < 1 || gameData.maxPlayers > 6) {
       throw new BadRequestError("Max players must be between 1 and 10");
-    }
-
-    if (gameData.minBet < 10) {
-      throw new BadRequestError("Min bet must be at least 10 chips");
     }
 
     const gameService = this.getGameService(gameData.gameType);
@@ -294,6 +290,14 @@ class GameService {
         bet.id,
         betData,
       );
+
+      // If game logic started a round (e.g. dealt cards), advance DB round and status
+      if (updatedState.roundActive) {
+        await gameRepository.incrementRound(gameId, client);
+        if (game.status === "waiting") {
+          await gameRepository.startGame(gameId, client);
+        }
+      }
 
       await gameRepository.updateGameState(gameId, updatedState, client);
 

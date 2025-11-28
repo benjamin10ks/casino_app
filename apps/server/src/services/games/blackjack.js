@@ -77,7 +77,8 @@ class BlackjackGame extends BaseGame {
     );
 
     if (allPlayersReady && Object.keys(gameState.players).length > 0) {
-      gameState = await this.startNewRound(gameState);
+      // start the round by dealing initial cards
+      gameState = await this.dealInitialCards(gameState);
     }
     return gameState;
   }

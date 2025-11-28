@@ -67,7 +67,7 @@ export default function SocketProvider({ children }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user?.id]);
 
   const value = {
     socket,

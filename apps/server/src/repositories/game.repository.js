@@ -58,7 +58,7 @@ class GameRepository {
     return result.rows;
   }
 
-  async updateGameState(gameId, status, client = pool) {
+  async updateStatus(gameId, status, client = pool) {
     const sql = `
       UPDATE games
       SET status = $1, updated_at = CURRENT_TIMESTAMP
@@ -129,10 +129,11 @@ class GameRepository {
       json_build_object(
         'userId', gs.user_id,
         'username', u.username,
+        'balance', u.balance,
         'position', gs.position,
         'status', gs.status,
-        'handsPlayed', gs.hands_played,  -- <-- FIX 1: ADDED COMMA HERE
-        'totalBet', gs.total_bet,       -- <-- FIX 1: ADDED COMMA HERE
+        'handsPlayed', gs.hands_played,
+        'totalBet', gs.total_bet,
         'totalWon', gs.total_won
       ) ORDER BY gs.position
     ) FILTER (WHERE gs.user_id IS NOT NULL) AS players  

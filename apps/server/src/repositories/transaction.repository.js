@@ -5,8 +5,8 @@ class TransactionRepository {
     const sql = `
       INSERT INTO transactions ( 
       user_id, amount, type, status, game_id, bet_id,
-      description, metadata, balance_before , balance_after )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      description, metadata, balance_before , balance_after)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`;
 
     const result = await client.query(sql, [

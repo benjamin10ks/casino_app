@@ -12,22 +12,50 @@ export function useGame(gameType, gameId) {
   const [error, setError] = useState(null);
   const [isInGame, setIsInGame] = useState(false);
 
-  // Normalize server payloads into a flat game state that's easy for UI to consume
   const normalizePayload = (payload) => {
+    const gp = payload?.gameState;
+    if (gp && gp.game) {
+      const wrapper = gp.game;
+      const innerState = wrapper.gameState || wrapper.game_state || {};
+      const playersList = gp.players || [];
+      const bets = gp.bets || [];
+      const mySession = gp.mySession || null;
+
+      const normalized = {
+        id: wrapper.id ?? null,
+        status: wrapper.status ?? innerState.status ?? null,
+        type: wrapper.type ?? wrapper.game_type ?? null,
+        currentRound: wrapper.currentRound ?? wrapper.current_round ?? null,
+        minBet: wrapper.minBet
+          ? parseFloat(wrapper.minBet)
+          : wrapper.min_bet
+            ? parseFloat(wrapper.min_bet)
+            : null,
+        ...(innerState || {}),
+        bets,
+      };
+
+      return { normalized, players: playersList, mySession };
+    }
+
+    // Fallback to older shapes
     const wrapper = payload?.game || payload || {};
     const players = payload?.players || payload?.game?.players || [];
     const mySession = payload?.mySession || null;
 
-    const innerState = wrapper.gameState || wrapper.game_state || payload?.gameState || payload?.game_state || wrapper;
+    const innerState =
+      wrapper.gameState ||
+      wrapper.game_state ||
+      payload?.gameState ||
+      payload?.game_state ||
+      wrapper;
 
     const normalized = {
-      // copy wrapper-level metadata
       id: wrapper.id ?? wrapper.gameId ?? null,
       status: wrapper.status ?? innerState.status ?? null,
       type: wrapper.game_type ?? wrapper.type ?? null,
       currentRound: wrapper.current_round ?? wrapper.currentRound ?? null,
       minBet: wrapper.min_bet ?? wrapper.minBet ?? null,
-      // spread inner game state last so inner keys (dealer, players, deck) are top-level
       ...(innerState || {}),
     };
 
@@ -41,8 +69,13 @@ export function useGame(gameType, gameId) {
     setLoading(true);
     setError(null);
 
+    socket.joiningGameId = gameId;
     // join the game and persist the current game id locally and on the socket
     socket.emit("game:join", { gameId }, (response) => {
+      try {
+        delete socket.joiningGameId;
+      } catch (e) {}
+
       if (!response.success) {
         setError(response.error || "Failed to join game");
         setLoading(false);
@@ -51,7 +84,11 @@ export function useGame(gameType, gameId) {
       console.log("Joined game successfully:", response);
 
       // normalize and store game state returned from server
-      const { normalized, players: payloadPlayers, mySession } = normalizePayload(response.gameState || response);
+      const {
+        normalized,
+        players: payloadPlayers,
+        mySession,
+      } = normalizePayload(response.gameState || response);
       setGameState(normalized);
       setPlayers(payloadPlayers || []);
       setIsInGame(true);
@@ -134,10 +171,20 @@ export function useGame(gameType, gameId) {
 
   const handleBetPlaced = useCallback((data) => {
     console.log("Bet placed:", data);
-    setGameState((prev) => ({
-      ...(prev || {}),
-      currentBets: { ...prev?.currentBets, [data.userId]: data.bet },
-    }));
+    setGameState((prev) => {
+      const next = { ...(prev || {}) };
+      const bets = Array.isArray(next.bets) ? [...next.bets] : [];
+      bets.push({
+        id: data.betId,
+        userId: data.userId,
+        username: data.username,
+        amount: data.amount,
+        betType: data.betType || "main",
+        status: "pending",
+      });
+      next.bets = bets;
+      return next;
+    });
   }, []);
 
   const handlePayout = useCallback(
@@ -165,7 +212,11 @@ export function useGame(gameType, gameId) {
         if (!prev) return prev;
         const next = { ...prev };
         if (next.bets) {
-          next.bets = next.bets.map((b) => (b.id === data.betId ? { ...b, resolved: true, outcome: data.outcome } : b));
+          next.bets = next.bets.map((b) =>
+            b.id === data.betId
+              ? { ...b, resolved: true, outcome: data.outcome }
+              : b,
+          );
         }
         return next;
       });
@@ -237,9 +288,6 @@ export function useGame(gameType, gameId) {
     },
     [socket, connected],
   );
-
-  console.log("GameState:", gameState);
-  console.log("User:", user);
 
   return {
     gameState,
