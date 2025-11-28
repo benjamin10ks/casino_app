@@ -40,3 +40,5 @@ class BaseGame {
     return 0;
   }
 }
+
+export default BaseGame;
