@@ -1,76 +1,42 @@
-// baseGame.js
-// Shared contract and helpers for game modules.
+// Interface for game modules
 
-/**
- * Minimal game module contract:
- * - createGame(options) -> returns a game instance
- * - game instance methods:
- *    - join(player)
- *    - leave(playerId)
- *    - start()
- *    - handleAction(playerId, action)
- *    - getState()
- *    - serialize()/toJSON()
- *    - resolveRound()
- *
- * Each game should implement the contract and keep state contained in the instance.
- */
-
-export function createBaseGame(options = {}) {
-  const state = {
-    id: options.id || `game-${Date.now()}`,
-    players: [],
-    phase: 'waiting', // waiting | playing | resolving | finished
-    metadata: {},
-    history: [],
-  };
-
-  function join(player) {
-    if (!player || !player.id) throw new Error('player must have id');
-    if (state.players.find(p => p.id === player.id)) return state;
-    state.players.push({ ...player, chips: player.chips || 0 });
-    return state;
+class BaseGame {
+  createInitialState(gameConfig) {
+    throw new Error(
+      "createInitialState method must be implemented by subclass",
+    );
   }
 
-  function leave(playerId) {
-    state.players = state.players.filter(p => p.id !== playerId);
-    return state;
+  async onPlayerJoined(gameState, playerId, position) {
+    throw new Error("onPlayerJoined method must be implemented by subclass");
   }
 
-  function start() {
-    if (state.phase !== 'waiting') throw new Error('Game already started');
-    state.phase = 'playing';
-    return state;
+  async onPlayerLeft(gameState, playerId) {
+    throw new Error("onPlayerLeft method must be implemented by subclass");
   }
 
-  function handleAction(playerId, action) {
-    // default stub to be overridden by specific games
-    throw new Error('handleAction not implemented');
+  getPlayerView(gameState, playerId) {
+    throw new Error("getPlayerView method must be implemented by subclass");
   }
 
-  function getState() {
-    return { ...state };
+  async validateBet(gameState, playerId, betData) {
+    throw new Error("validateBet method must be implemented by subclass");
   }
 
-  function serialize() {
-    return JSON.parse(JSON.stringify(state));
+  async onBetPlaced(gameState, playerId, betId, betData) {
+    throw new Error("onBetPlaced method must be implemented by subclass");
   }
 
-  function resolveRound() {
-    // default: mark finished
-    state.phase = 'finished';
-    state.history.push({ at: Date.now(), snapshot: serialize() });
-    return state;
+  processAction(gameState, userId, action, actionData) {
+    throw new Error("processAction method must be implemented by subclass");
   }
 
-  return {
-    join,
-    leave,
-    start,
-    handleAction,
-    getState,
-    serialize,
-    resolveRound,
-    _internal: state,
-  };
+  async startNewRound(gameState) {
+    throw new Error("startNewRound method must be implemented by subclass");
+  }
+
+  //For card games (optional)
+  calculateHandView(cards) {
+    return 0;
+  }
 }

@@ -286,6 +286,13 @@ class GameService {
         client,
       );
 
+      const updatedState = await gameService.onBetPlaced(
+        game.game_state,
+        userId,
+        bet.id,
+        betData,
+      );
+
       await gameRepository.updateGameState(gameId, updatedState, client);
 
       return {
@@ -299,53 +306,95 @@ class GameService {
     });
   }
 
-  async resolveBet(betId, outcome) {
+  async performAction(gameId, userId, action, actionData = {}) {
     return pool.transaction(async (client) => {
-      const bet = await betRepository.findById(betId);
+      const game = await gameRepository.findById(gameId);
 
-      if (!bet) {
-        throw new NotFoundError("Bet not found");
+      if (!game) {
+        throw new NotFoundError("Game not found");
       }
 
-      if (bet.status !== "pending") {
-        throw new BadRequestError("Bet already resolved");
+      if (game.status !== "in_progress") {
+        throw new BadRequestError("Game is not in progress");
       }
 
-      const resolvedBet = await betRepository.updateBetStatus(
-        betId,
-        outcome,
-        client,
+      const session = await gameSessionRepository.findSession(gameId, userId);
+      if (!session || session.status !== "active") {
+        throw new ForbiddenError("User not in game");
+      }
+
+      const gameService = this.getGameService(game.game_type);
+      const result = await gameService.processAction(
+        game.game_state,
+        userId,
+        action,
+        actionData,
       );
 
-      if (outcome === "won" && outcome.payout > 0) {
-        await chipsService.addBalance(
-          bet.user_id,
-          outcome.payout,
-          bet.game_id,
-          bet.id,
-          client,
-        );
+      await gameRepository.updateGameState(gameId, result.gameState, client);
 
-        await gameSessionRepository.updateStats(bet.game_id, bet.user_id, {
-          hands_played: 1,
-          total_won: outcome.payout,
-          client,
-        });
-      } else if (outcome.status === "push") {
-        await chipsService.refundBet(
-          bet.user_id,
-          bet.amount,
-          bet.game_id,
-          betId,
-          client,
-        );
+      if (result.resolutions && result.resolutions.length > 0) {
+        for (const resolution of result.resolutions) {
+          await this.resolveBet(resolution.betId, resolution.outcome, client);
+        }
       }
 
       return {
         success: true,
-        bet: resolvedBet,
+        result: result.playerResult,
       };
     });
+  }
+
+  async resolveBet(betId, outcome, client) {
+    const bet = await betRepository.findById(betId);
+
+    if (!bet) {
+      throw new NotFoundError("Bet not found");
+    }
+
+    if (bet.status !== "pending") {
+      throw new BadRequestError("Bet already resolved");
+    }
+
+    const resolvedBet = await betRepository.updateBetStatus(
+      betId,
+      outcome,
+      client,
+    );
+
+    if (outcome === "won" && outcome.payout > 0) {
+      await chipsService.addBalance(
+        bet.user_id,
+        outcome.payout,
+        bet.game_id,
+        bet.id,
+        client,
+      );
+
+      await gameSessionRepository.updateStats(
+        bet.game_id,
+        bet.user_id,
+        {
+          hands_played: 1,
+          total_won: outcome.payout,
+        },
+        client,
+      );
+    } else if (outcome.status === "push") {
+      await chipsService.refundBet(
+        bet.user_id,
+        bet.amount,
+        bet.game_id,
+        betId,
+        client,
+      );
+    }
+
+    return {
+      success: true,
+      bet: resolvedBet,
+    };
   }
 
   async startNewRound(gameId) {
@@ -355,7 +404,13 @@ class GameService {
         throw new NotFoundError("Game not found");
       }
 
+      const gameService = this.getGameService(game.game_type);
+
+      const newRoundState = await gameService.startNewRound(game.game_state);
+
       const updatedGame = await gameRepository.incrementRound(gameId, client);
+
+      await gameRepository.updateGameState(gameId, newRoundState, client);
 
       if (game.status === "waiting") {
         await gameRepository.startGame(gameId, client);
