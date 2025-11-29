@@ -25,7 +25,7 @@ export default function Game() {
     startNewRound,
     isMyTurn,
     myPlayerData,
-  } = useGame(gameType, gameId);
+  } = useGame(gameId, gameType);
 
   const handleLeaveGame = () => {
     leaveGame();
@@ -125,7 +125,6 @@ export default function Game() {
             onPlaceBet={placeBet}
             onAction={performAction}
             onNewRound={startNewRound}
-            userBalance={user.balance}
             isMyTurn={isMyTurn}
           />
         )}

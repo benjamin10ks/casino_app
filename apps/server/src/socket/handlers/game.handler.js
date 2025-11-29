@@ -1,5 +1,6 @@
 import gameService from "../../services/game.service.js";
 import gameSessionRepository from "../../repositories/gameSession.repository.js";
+import userRepository from "../../repositories/user.repository.js";
 
 export default function gameHandler(socket, io) {
   const { userId, username } = socket;
@@ -60,6 +61,7 @@ export default function gameHandler(socket, io) {
     try {
       const { gameId } = data;
       const leaveGameId = gameId || socket.currentGameId;
+      socket.currentGameId = null;
 
       if (!leaveGameId) {
         throw new Error("No game to leave");
@@ -122,6 +124,13 @@ export default function gameHandler(socket, io) {
       });
 
       console.log(`${username} (${userId}) placed a bet in game ${gameId}:`);
+
+      const user = await userRepository.findById(userId);
+
+      socket.emit("balance:updated", {
+        balance: parseFloat(user.balance),
+        newBalance: parseFloat(user.balance),
+      });
 
       io.to(`game:${gameId}`).emit("game:betPlaced", {
         userId,
@@ -217,7 +226,7 @@ export default function gameHandler(socket, io) {
     }
   });
 
-  socket.on("game:newRound", async (callback) => {
+  socket.on("game:newRound", async (data, callback) => {
     try {
       const gameId = socket.currentGameId;
 
@@ -225,12 +234,10 @@ export default function gameHandler(socket, io) {
         throw new Error("No active game");
       }
 
-      // Start a new round on the server
       const result = await gameService.startNewRound(gameId);
 
       console.log(`New round started in game ${gameId}`);
 
-      // Broadcast canonical updated game state after new round
       try {
         const updatedState = await gameService.getGameState(gameId, userId);
         io.to(`game:${gameId}`).emit("game:update", {
@@ -263,7 +270,6 @@ export default function gameHandler(socket, io) {
         throw new Error("No active game");
       }
 
-      // Treat incoming state update as canonical and broadcast to room
       io.to(`game:${gameId}`).emit("game:update", { gameState });
 
       if (callback) {
@@ -281,6 +287,9 @@ export default function gameHandler(socket, io) {
   });
 
   socket.on("disconnect", async () => {
+    const gameId = socket.currentGameId;
+    socket.currentGameId = null;
+    if (!gameId) return;
     if (socket.currentGameId) {
       try {
         await gameService.leaveGame(socket.currentGameId, userId);

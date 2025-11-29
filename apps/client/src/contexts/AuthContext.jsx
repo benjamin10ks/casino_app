@@ -25,7 +25,7 @@ export default function AuthProvider({ children }) {
       setUser(response.data.data.user);
       setIsGuest(response.data.data.isGuest || false);
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Auth check failed:", error);
       localStorage.removeItem("token");
     } finally {
       setLoading(false);
@@ -49,7 +49,10 @@ export default function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    const response = await api.post("/auth/login", { email, password });
+    const response = await api.post("/auth/login", {
+      email,
+      password,
+    });
 
     const { user, token } = response.data.data;
 
@@ -61,13 +64,15 @@ export default function AuthProvider({ children }) {
   };
 
   const guestLogin = async () => {
-    const response = await api.post("/auth/guest-login");
+    const response = await api.post("/auth/guest");
 
     const { user, token } = response.data.data;
 
     localStorage.setItem("token", token);
     setUser(user);
     setIsGuest(true);
+
+    return user;
   };
 
   const logout = () => {
@@ -76,8 +81,17 @@ export default function AuthProvider({ children }) {
     setIsGuest(false);
   };
 
-  const updateBalance = (newBalance) => {
-    setUser((prevUser) => ({ ...prevUser, balance: newBalance }));
+  const updateBalance = (newBalanceOrUpdater) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+
+      if (typeof newBalanceOrUpdater === "function") {
+        const newBalance = newBalanceOrUpdater(prev.balance);
+        return { ...prev, balance: newBalance };
+      }
+
+      return { ...prev, balance: newBalanceOrUpdater };
+    });
   };
 
   const value = {

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSocket } from "../hooks/useSocket.js";
-import { useAuth } from "../hooks/useAuth.js";
+import { useSocket } from "./useSocket.js";
+import { useAuth } from "./useAuth.js";
 
-export function useGame(gameType, gameId) {
+export function useGame(gameId, gameType) {
   const { socket, connected } = useSocket();
-  const { user, updateBalance } = useAuth();
+  const { user, updateBalance: updateAuthBalance } = useAuth();
 
   const [gameState, setGameState] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -12,152 +12,38 @@ export function useGame(gameType, gameId) {
   const [error, setError] = useState(null);
   const [isInGame, setIsInGame] = useState(false);
 
-  const normalizePayload = (payload) => {
-    const gp = payload?.gameState;
-    if (gp && gp.game) {
-      const wrapper = gp.game;
-      const innerState = wrapper.gameState || wrapper.game_state || {};
-      const playersList = gp.players || [];
-      const bets = gp.bets || [];
-      const mySession = gp.mySession || null;
-
-      const normalized = {
-        id: wrapper.id ?? null,
-        status: wrapper.status ?? innerState.status ?? null,
-        type: wrapper.type ?? wrapper.game_type ?? null,
-        currentRound: wrapper.currentRound ?? wrapper.current_round ?? null,
-        minBet: wrapper.minBet
-          ? parseFloat(wrapper.minBet)
-          : wrapper.min_bet
-            ? parseFloat(wrapper.min_bet)
-            : null,
-        ...(innerState || {}),
-        bets,
-      };
-
-      // add convenience mappings for Blackjack UI
-      try {
-        const gameTypeLower = (normalized.type || "").toLowerCase();
-        if (gameTypeLower === "blackjack") {
-          const uid = user?.id ?? user?.userId ?? null;
-          // innerState contains dealer and players map
-          const dealer = innerState?.dealer || null;
-          const playerMap = innerState?.players || {};
-
-          // keep raw dealer state and map dealer hand to UI-friendly shape
-          normalized.dealer = dealer || null;
-          if (dealer) {
-            normalized.dealerHand = {
-              cards: dealer.hand || [],
-              total: dealer.value ?? null,
-              isStanding: dealer.isStanding ?? false,
-            };
-            // hide second card if roundActive is true
-            if (
-              innerState?.roundActive &&
-              normalized.dealerHand.cards?.length > 1
-            ) {
-              normalized.dealerHand.cards = [
-                normalized.dealerHand.cards[0],
-                { hidden: true },
-              ];
-            }
-          } else {
-            normalized.dealerHand = null;
-          }
-
-          // map player hand for current user
-          const myPlayer = playerMap[uid] || null;
-          if (myPlayer) {
-            normalized.playerHand = {
-              cards: myPlayer.hand || [],
-              total: myPlayer.value ?? null,
-              isBlackjack: myPlayer.status === "blackjack",
-              isBusted: myPlayer.status === "busted",
-            };
-          } else {
-            normalized.playerHand = null;
-          }
-
-          normalized.currentPlayerIndex =
-            innerState?.currentPlayerIndex ?? innerState?.currentPlayer ?? null;
-          normalized.currentPlayer = null;
-          if (
-            normalized.currentPlayerIndex != null &&
-            Array.isArray(playersList)
-          ) {
-            const found = playersList.find(
-              (p) => p.position === normalized.currentPlayerIndex,
-            );
-            normalized.currentPlayer = found ? found.userId : null;
-          }
-
-          normalized.currentBet = myPlayer?.bet || 0;
-        }
-      } catch (err) {
-        console.warn("Error adding game-specific fields:", err);
-      }
-
-      return { normalized, players: playersList, mySession };
-    }
-
-    // Fallback to older shapes
-    const wrapper = payload?.game || payload || {};
-    const players = payload?.players || payload?.game?.players || [];
-    const mySession = payload?.mySession || null;
-
-    const innerState =
-      wrapper.gameState ||
-      wrapper.game_state ||
-      payload?.gameState ||
-      payload?.game_state ||
-      wrapper;
-
-    const normalized = {
-      id: wrapper.id ?? wrapper.gameId ?? null,
-      status: wrapper.status ?? innerState.status ?? null,
-      type: wrapper.game_type ?? wrapper.type ?? null,
-      currentRound: wrapper.current_round ?? wrapper.currentRound ?? null,
-      minBet: wrapper.min_bet ?? wrapper.minBet ?? null,
-      ...(innerState || {}),
-    };
-
-    return { normalized, players, mySession };
-  };
-
-  /* eslint-disable react-hooks/exhaustive-deps */
+  // Join game
   useEffect(() => {
-    if (!connected || !socket || !gameId) return;
+    if (!socket || !connected || !gameId) return;
 
     setLoading(true);
     setError(null);
 
-    socket.joiningGameId = gameId;
-    // join the game and persist the current game id locally and on the socket
+    console.log("Joining game:", gameId);
+
     socket.emit("game:join", { gameId }, (response) => {
-      try {
-        delete socket.joiningGameId;
-      } catch (e) {}
+      console.log("Join response:", response);
 
       if (!response.success) {
         setError(response.error || "Failed to join game");
         setLoading(false);
         return;
       }
-      console.log("Joined game successfully:", response);
 
-      // normalize and store game state returned from server
-      const {
-        normalized,
-        players: payloadPlayers,
-        mySession,
-      } = normalizePayload(response.gameState || response);
-      setGameState(normalized);
-      setPlayers(payloadPlayers || []);
+      // Extract data from server response
+      // Server sends: { success: true, gameState: { game: {...}, players: [...], bets: [...] } }
+      const serverGameState = response.gameState;
+
+      if (serverGameState) {
+        // Set the inner game state (what the game component needs)
+        setGameState(serverGameState.game);
+        setPlayers(serverGameState.players || []);
+      }
+
       setIsInGame(true);
       setLoading(false);
 
-      // store current game id for reconnection and convenience
+      // Store for reconnection
       try {
         socket.currentGameId = gameId;
         localStorage.setItem("currentGameId", gameId);
@@ -166,61 +52,70 @@ export function useGame(gameType, gameId) {
       }
     });
 
-    socket.on("game:update", handleGameUpdate);
+    // Listen for game events
+    socket.on("game:stateUpdate", handleGameStateUpdate);
     socket.on("game:playerJoined", handlePlayerJoined);
     socket.on("game:playerLeft", handlePlayerLeft);
     socket.on("game:betPlaced", handleBetPlaced);
-    socket.on("game:betResolved", handleBetResolved);
     socket.on("game:payout", handlePayout);
     socket.on("game:ended", handleGameEnded);
     socket.on("game:error", handleGameError);
-    socket.on("game:stateUpdated", handleGameUpdate);
 
+    // Cleanup
     return () => {
       if (socket && isInGame) {
         socket.emit("game:leave", { gameId });
         try {
           localStorage.removeItem("currentGameId");
+          delete socket.currentGameId;
         } catch (err) {
-          console.warn("Failed to remove currentGameId", err);
+          console.warn("Cleanup error:", err);
         }
       }
 
-      socket.off("game:update", handleGameUpdate);
+      socket.off("game:stateUpdate", handleGameStateUpdate);
       socket.off("game:playerJoined", handlePlayerJoined);
       socket.off("game:playerLeft", handlePlayerLeft);
       socket.off("game:betPlaced", handleBetPlaced);
       socket.off("game:payout", handlePayout);
       socket.off("game:ended", handleGameEnded);
       socket.off("game:error", handleGameError);
-      socket.off("game:stateUpdated", handleGameUpdate);
 
       setIsInGame(false);
     };
-  }, [connected, socket, gameId]);
-  /* eslint-enable react-hooks/exhaustive-deps */
-  const handleGameUpdate = useCallback((data) => {
-    console.log("Raw game update payload:", data);
-    console.log("Game update received:", data);
-    const payload = data?.gameState ? data : { game: data };
-    const { normalized, players: payloadPlayers } = normalizePayload(payload);
-    console.log("Normalized payload:", normalized, "players:", payloadPlayers);
-    setGameState(normalized);
-    if (payloadPlayers && payloadPlayers.length) setPlayers(payloadPlayers);
+  }, [socket, connected, gameId]);
+
+  // Handle game state update from server
+  const handleGameStateUpdate = useCallback((data) => {
+    console.log("Game state update received:", data);
+
+    // Server sends: { game: {...}, players: [...], bets: [...] }
+    if (data.game) {
+      setGameState(data.game);
+    }
+
+    if (data.players) {
+      setPlayers(data.players);
+    }
   }, []);
 
+  // Handle player joined
   const handlePlayerJoined = useCallback((data) => {
     console.log("Player joined:", data);
-    setPlayers((prev = []) => {
-      if (prev.find((p) => p.userId === data.userId)) return prev;
+
+    setPlayers((prev) => {
+      // Don't add duplicate
+      if (prev.find((p) => p.userId === data.userId)) {
+        return prev;
+      }
+
       return [
         ...prev,
         {
-          id: data.userId,
           userId: data.userId,
           username: data.username,
           position: data.position,
-          status: "active",
+          balance: 0,
           handsPlayed: 0,
           totalBet: 0,
           totalWon: 0,
@@ -229,149 +124,167 @@ export function useGame(gameType, gameId) {
     });
   }, []);
 
+  // Handle player left
   const handlePlayerLeft = useCallback((data) => {
     console.log("Player left:", data);
-    setPlayers((prev = []) => prev.filter((p) => p.userId !== data.userId));
+    setPlayers((prev) => prev.filter((p) => p.userId !== data.userId));
   }, []);
 
+  // Handle bet placed
   const handleBetPlaced = useCallback((data) => {
     console.log("Bet placed:", data);
-    setGameState((prev) => {
-      const next = { ...(prev || {}) };
-      const bets = Array.isArray(next.bets) ? [...next.bets] : [];
-      bets.push({
-        id: data.betId,
-        userId: data.userId,
-        username: data.username,
-        amount: data.amount,
-        betType: data.betType || "main",
-        status: "pending",
-      });
-      next.bets = bets;
-      return next;
-    });
+    // State will be updated via game:stateUpdate
+    // This is just for notifications/animations
   }, []);
 
   const handlePayout = useCallback(
     (data) => {
       console.log("Payout received:", data);
-      updateBalance(data.newBalance);
-    },
-    [updateBalance],
-  );
 
-  // update local state when a bet resolution happens; server will emit payout separately
-  const handleBetResolved = useCallback(
-    (data) => {
-      console.log("Bet resolved:", data);
-      // if this resolution affects the current user, update their balance
-      const uid = user?.id ?? user?.userId;
-      if (data.outcome && uid === data.userId) {
-        // outcome.payout should be added to existing balance
-        const payout = data.outcome.payout || 0;
-        updateBalance((user?.balance || 0) + payout);
+      if (data.amount && data.amount > 0) {
+        updateAuthBalance((prevBalance) => {
+          const newBalance = prevBalance + data.amount;
+          console.log("Balance after payout:", prevBalance, "->", newBalance);
+          return newBalance;
+        });
+      } else if (data.newBalance !== undefined) {
+        console.log("Setting balance to:", data.newBalance);
+        updateAuthBalance(data.newBalance);
       }
-
-      // Also update gameState to mark bet as resolved if present
-      setGameState((prev) => {
-        if (!prev) return prev;
-        const next = { ...prev };
-        if (next.bets) {
-          next.bets = next.bets.map((b) =>
-            b.id === data.betId
-              ? { ...b, resolved: true, outcome: data.outcome }
-              : b,
-          );
-        }
-        return next;
-      });
     },
-    [updateBalance, user],
+    [updateAuthBalance],
   );
 
+  // Handle game ended
   const handleGameEnded = useCallback((data) => {
     console.log("Game ended:", data);
     setGameState((prev) => ({
       ...prev,
-      status: "ended",
+      status: "completed",
       result: data,
     }));
   }, []);
 
+  // Handle game error
   const handleGameError = useCallback((data) => {
     console.error("Game error:", data);
-    setError(data.error || "An unknown error occurred");
+    setError(data.message || data.error || "An error occurred");
   }, []);
 
   const placeBet = useCallback(
     (betData, callback) => {
       if (!socket || !connected) {
-        callback?.({ success: false, error: "Not connected to server" });
+        callback?.({ success: false, error: "Not connected" });
         return;
       }
 
-      socket.emit("game:placeBet", { ...betData, gameId }, (response) => {
+      console.log("Placing bet:", betData);
+
+      socket.emit("game:placeBet", betData, (response) => {
+        console.log("Bet response:", response);
+
         if (response.success) {
-          updateBalance((user?.balance || 0) - betData.amount);
+          updateAuthBalance((prevBalance) => {
+            const newBalance = prevBalance - betData.amount;
+            console.log("Balance updated:", prevBalance, "->", newBalance);
+            return newBalance;
+          });
         }
+
         callback?.(response);
       });
     },
-    [socket, connected, user?.balance, updateBalance],
+    [socket, connected, updateAuthBalance],
   );
 
+  // Perform action (hit, stand, spin, etc.)
   const performAction = useCallback(
-    (action, actionData = null, callback) => {
+    (action, actionData = {}, callback) => {
       if (!socket || !connected) {
-        callback?.({ success: false, error: "Not connected to server" });
+        callback?.({ success: false, error: "Not connected" });
         return;
       }
 
-      socket.emit("game:action", { gameId, action, actionData }, (response) => {
-        callback?.(response);
-      });
-    },
-    [socket, connected, gameId],
-  );
+      console.log("Performing action:", action, actionData);
 
-  const leaveGame = useCallback(() => {
-    if (socket && isInGame && isInGame) {
-      socket.emit("game:leave", { gameId });
-      setIsInGame(false);
-    }
-  }, [connected, socket, gameId]);
-
-  const startNewRound = useCallback(
-    (callback) => {
-      if (!socket || !connected) {
-        callback?.({ success: false, error: "Not connected to server" });
-        return;
-      }
-      socket.emit("game:newRound", { gameId }, (response) => {
+      socket.emit("game:action", { action, actionData }, (response) => {
+        console.log("Action response:", response);
         callback?.(response);
       });
     },
     [socket, connected],
   );
 
+  // Leave game
+  const leaveGame = useCallback(() => {
+    if (socket && connected && isInGame) {
+      socket.emit("game:leave", { gameId });
+      setIsInGame(false);
+    }
+  }, [socket, connected, gameId, isInGame]);
+
+  // Start new round
+  const startNewRound = useCallback(
+    (callback) => {
+      if (!socket || !connected) {
+        callback?.({ success: false, error: "Not connected" });
+        return;
+      }
+
+      console.log("Starting new round");
+
+      socket.emit("game:newRound", {}, (response) => {
+        console.log("New round response:", response);
+        callback?.(response);
+      });
+    },
+    [socket, connected],
+  );
+
+  // Get player-specific data from gameState
+  const getMyPlayerData = useCallback(() => {
+    if (!gameState?.gameState?.players || !user?.id) {
+      return null;
+    }
+
+    const playerId = user.id.toString();
+    return gameState.gameState.players[playerId] || null;
+  }, [gameState, user?.id]);
+
+  // Check if it's my turn
+  const isMyTurn = useCallback(() => {
+    if (!gameState?.gameState || !user?.id) {
+      return false;
+    }
+
+    const playerId = user.id.toString();
+    const myPlayer = gameState.gameState.players?.[playerId];
+
+    // In blackjack, it's your turn if:
+    // 1. Round is active
+    // 2. Your status is 'playing'
+    return (
+      gameState.gameState.roundActive === true && myPlayer?.status === "playing"
+    );
+  }, [gameState, user?.id]);
+
   return {
+    // State
     gameState,
     players,
     loading,
     error,
     isInGame,
     connected,
+
+    // Actions
     placeBet,
     performAction,
     leaveGame,
     startNewRound,
 
-    isMyTurn: (() => {
-      const uid = user?.id ?? user?.userId ?? null;
-      return gameState?.currentPlayer === uid;
-    })(),
-    myPlayerData: (players || []).find(
-      (p) => p.id === (user?.id ?? user?.userId),
-    ),
+    // Computed values
+    isMyTurn: isMyTurn(),
+    myPlayerData: getMyPlayerData(),
   };
 }

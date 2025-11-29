@@ -172,13 +172,6 @@ class GameService {
         }
       }
 
-      const gameService = this.getGameService(game.game_type);
-      const updatedState = await gameService.onPlayerLeft(
-        game.game_state,
-        userId,
-      );
-
-      // mark the user's session as left
       await gameSessionRepository.updateStatus(gameId, userId, "left", client);
 
       if (game.host_id === userId && game.status === "waiting") {
@@ -366,7 +359,7 @@ class GameService {
 
     const resolvedBet = await betRepository.resolveBet(betId, outcome, client);
 
-    if (outcome === "won" && outcome.payout > 0) {
+    if (outcome.status === "won" && outcome.payout > 0) {
       await chipsService.addBalance(
         bet.user_id,
         outcome.payout,
