@@ -33,6 +33,7 @@ export function useGame(gameId, gameType) {
       // Extract data from server response
       // Server sends: { success: true, gameState: { game: {...}, players: [...], bets: [...] } }
       const serverGameState = response.gameState;
+      console.log("SERVER GAME STATE:", serverGameState);
 
       if (serverGameState) {
         // Set the inner game state (what the game component needs)
@@ -53,7 +54,7 @@ export function useGame(gameId, gameType) {
     });
 
     // Listen for game events
-    socket.on("game:stateUpdate", handleGameStateUpdate);
+    socket.on("game:update", handleGameStateUpdate);
     socket.on("game:playerJoined", handlePlayerJoined);
     socket.on("game:playerLeft", handlePlayerLeft);
     socket.on("game:betPlaced", handleBetPlaced);
@@ -73,7 +74,7 @@ export function useGame(gameId, gameType) {
         }
       }
 
-      socket.off("game:stateUpdate", handleGameStateUpdate);
+      socket.off("game:update", handleGameStateUpdate);
       socket.off("game:playerJoined", handlePlayerJoined);
       socket.off("game:playerLeft", handlePlayerLeft);
       socket.off("game:betPlaced", handleBetPlaced);
@@ -89,7 +90,6 @@ export function useGame(gameId, gameType) {
   const handleGameStateUpdate = useCallback((data) => {
     console.log("Game state update received:", data);
 
-    // Server sends: { game: {...}, players: [...], bets: [...] }
     if (data.game) {
       setGameState(data.game);
     }
@@ -133,7 +133,7 @@ export function useGame(gameId, gameType) {
   // Handle bet placed
   const handleBetPlaced = useCallback((data) => {
     console.log("Bet placed:", data);
-    // State will be updated via game:stateUpdate
+    // State will be updated via game:update
     // This is just for notifications/animations
   }, []);
 

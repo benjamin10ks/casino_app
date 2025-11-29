@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useBalance } from "../../hooks/useBalance";
 
@@ -15,8 +15,12 @@ export default function Blackjack({
   const [betAmount, setBetAmount] = useState(10);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
 
+  if (!gameState) {
+    return <div className="text-center p-4">Loading Blackjack game...</div>;
+  }
+
   const gameData = useMemo(() => {
-    if (!gameState?.gameState) {
+    if (!gameState) {
       return {
         dealer: null,
         player: null,
@@ -26,26 +30,32 @@ export default function Blackjack({
       };
     }
 
-    const innerState = gameState.gameState;
+    // Support server payload structure: gameState.game.gameState
+    const innerState = gameState.game?.gameState || gameState.gameState || {};
     const playerId = user?.id?.toString();
+
     const myPlayer = innerState.players?.[playerId] || null;
     const dealer = innerState.dealer || null;
 
     return {
       dealer,
       player: myPlayer,
-      status: gameState.status || "waiting",
+      status: gameState.game?.status || gameState.status || "waiting",
       roundActive: innerState.roundActive || false,
       currentBet: myPlayer?.bet || 0,
     };
   }, [gameState, user?.id]);
 
-  const { dealer, player, status, roundActive, currentBet } = gameData;
+  const { player, dealer, status, roundActive, currentBet } = gameData;
 
-  if (!gameState) {
-    return <div className="text-center p-4">Loading Blackjack game...</div>;
-  }
-  console.log("gameState:", gameState);
+  useEffect(() => {
+    console.log("==== Blackjack Debug ====");
+    console.log("player:", player);
+    console.log("dealer:", dealer);
+    console.log("status:", status);
+    console.log("roundActive:", roundActive);
+    console.log("currentBet:", currentBet);
+  }, [gameData]);
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-gray-800 text-white rounded-xl shadow-lg space-y-6">
@@ -61,7 +71,7 @@ export default function Blackjack({
       <div className="bg-gray-700 p-4 rounded-lg space-y-2">
         <h3 className="text-lg font-bold">Dealer's Hand</h3>
         <div className="flex gap-2">
-          {dealer?.hand && dealer.hand.length > 0 ? (
+          {dealer?.hand?.length > 0 ? (
             dealer.hand.map((card, i) => (
               <div
                 key={i}
@@ -89,7 +99,7 @@ export default function Blackjack({
       <div className="bg-gray-700 p-4 rounded-lg space-y-2">
         <h3 className="text-lg font-bold">Your Hand</h3>
         <div className="flex gap-2">
-          {player?.hand && player.hand.length > 0 ? (
+          {player?.hand?.length > 0 ? (
             player.hand.map((card, i) => (
               <div
                 key={i}
@@ -103,7 +113,7 @@ export default function Blackjack({
             <div className="text-gray-400">No cards yet</div>
           )}
         </div>
-        {player?.hand && player.hand.length > 0 && (
+        {player?.hand?.length > 0 && (
           <div className="space-y-1">
             <p className="font-semibold">Total: {player.value}</p>
             {player.status === "blackjack" && (
@@ -116,11 +126,10 @@ export default function Blackjack({
         )}
       </div>
 
-      {/* Game Actions - Betting Phase */}
+      {/* Betting Phase */}
       {status === "waiting" && !player?.hasBet && (
         <div className="bg-gray-700 p-4 rounded-lg space-y-3">
           <h3 className="text-lg font-bold">Place Your Bet</h3>
-
           <div className="flex gap-2 flex-wrap">
             {[10, 25, 50, 100].map((amt) => (
               <button
@@ -178,9 +187,7 @@ export default function Blackjack({
         <div className="flex gap-2 justify-center">
           <button
             onClick={() =>
-              onAction("hit", {}, (r) => {
-                if (!r.success) alert(r.error);
-              })
+              onAction("hit", {}, (r) => !r.success && alert(r.error))
             }
             className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-400 font-bold"
           >
@@ -188,9 +195,7 @@ export default function Blackjack({
           </button>
           <button
             onClick={() =>
-              onAction("stand", {}, (r) => {
-                if (!r.success) alert(r.error);
-              })
+              onAction("stand", {}, (r) => !r.success && alert(r.error))
             }
             className="px-4 py-2 rounded bg-red-500 hover:bg-red-400 font-bold"
           >
@@ -199,7 +204,7 @@ export default function Blackjack({
         </div>
       )}
 
-      {/* Round finished */}
+      {/* Round Finished */}
       {!roundActive && player?.status && player.status !== "waiting" && (
         <div className="text-center space-y-3">
           <p className="text-lg font-bold">
@@ -208,11 +213,7 @@ export default function Blackjack({
             {player.status === "standing" && "Round Complete"}
           </p>
           <button
-            onClick={() =>
-              onNewRound((r) => {
-                if (!r.success) alert(r.error);
-              })
-            }
+            onClick={() => onNewRound((r) => !r.success && alert(r.error))}
             className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 font-bold"
           >
             Play Again

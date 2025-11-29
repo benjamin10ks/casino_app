@@ -261,7 +261,7 @@ export default function gameHandler(socket, io) {
     }
   });
 
-  socket.on("game:updateState", async (data, callback) => {
+  socket.on("game:update", async (data, callback) => {
     try {
       const { gameState } = data;
       const gameId = socket.currentGameId;

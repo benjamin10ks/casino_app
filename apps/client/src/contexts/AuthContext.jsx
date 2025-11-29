@@ -64,7 +64,7 @@ export default function AuthProvider({ children }) {
   };
 
   const guestLogin = async () => {
-    const response = await api.post("/auth/guest");
+    const response = await api.post("/auth/guest-login");
 
     const { user, token } = response.data.data;
 
