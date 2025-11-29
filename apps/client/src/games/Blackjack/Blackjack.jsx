@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useBalance } from "../../hooks/useBalance";
 
@@ -19,34 +19,16 @@ export default function Blackjack({
     return <div className="text-center p-4">Loading Blackjack game...</div>;
   }
 
-  const gameData = useMemo(() => {
-    if (!gameState) {
-      return {
-        dealer: null,
-        player: null,
-        status: "waiting",
-        roundActive: false,
-        currentBet: 0,
-      };
-    }
-
-    // Support server payload structure: gameState.game.gameState
-    const innerState = gameState.game?.gameState || gameState.gameState || {};
-    const playerId = user?.id?.toString();
-
-    const myPlayer = innerState.players?.[playerId] || null;
-    const dealer = innerState.dealer || null;
-
-    return {
-      dealer,
-      player: myPlayer,
-      status: gameState.game?.status || gameState.status || "waiting",
-      roundActive: innerState.roundActive || false,
-      currentBet: myPlayer?.bet || 0,
-    };
-  }, [gameState, user?.id]);
-
-  const { player, dealer, status, roundActive, currentBet } = gameData;
+  // --- Extract data from server payload ---
+  const innerState = gameState.game?.gameState || gameState.gameState || {};
+  const playerId = user?.id?.toString();
+  const player = innerState.players?.[playerId] || null;
+  const dealer = innerState.dealer || null;
+  const status = gameState.game?.status || gameState.status || "waiting";
+  const roundActive = innerState.roundActive || false;
+  const currentBet = player?.bet || 0;
+  const roundFinished =
+    !roundActive && player?.status && player.status !== "waiting";
 
   useEffect(() => {
     console.log("==== Blackjack Debug ====");
@@ -55,7 +37,7 @@ export default function Blackjack({
     console.log("status:", status);
     console.log("roundActive:", roundActive);
     console.log("currentBet:", currentBet);
-  }, [gameData]);
+  }, [player, dealer, status, roundActive, currentBet]);
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-gray-800 text-white rounded-xl shadow-lg space-y-6">
@@ -90,7 +72,7 @@ export default function Blackjack({
         </div>
         {dealer?.hand &&
           !dealer.hand.some((c) => c.hidden) &&
-          dealer.value > 0 && (
+          dealer.value != null && (
             <p className="font-semibold">Total: {dealer.value}</p>
           )}
       </div>
@@ -205,7 +187,7 @@ export default function Blackjack({
       )}
 
       {/* Round Finished */}
-      {!roundActive && player?.status && player.status !== "waiting" && (
+      {roundFinished && (
         <div className="text-center space-y-3">
           <p className="text-lg font-bold">
             {player.status === "busted" && "💥 Busted!"}
