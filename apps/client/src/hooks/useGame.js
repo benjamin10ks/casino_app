@@ -13,6 +13,8 @@ export function useGame(gameId, gameType) {
   const [isInGame, setIsInGame] = useState(false);
 
   // Join game
+
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!socket || !connected || !gameId) return;
 
@@ -36,9 +38,10 @@ export function useGame(gameId, gameType) {
       console.log("SERVER GAME STATE:", serverGameState);
 
       if (serverGameState) {
-        // Set the inner game state (what the game component needs)
-        setGameState(serverGameState.game);
-        setPlayers(serverGameState.players || []);
+        // Support both shapes: { game: {...}, players: [...] } or direct game state
+        const canonicalGame = serverGameState.game || serverGameState;
+        setGameState(canonicalGame);
+        setPlayers(serverGameState.players || canonicalGame.players || []);
       }
 
       setIsInGame(true);
@@ -58,7 +61,10 @@ export function useGame(gameId, gameType) {
     socket.on("game:playerJoined", handlePlayerJoined);
     socket.on("game:playerLeft", handlePlayerLeft);
     socket.on("game:betPlaced", handleBetPlaced);
-    socket.on("game:payout", handlePayout);
+    // Server emits balance:updated for balance changes
+    socket.on("balance:updated", handlePayout);
+    // Server emits bet resolution events
+    socket.on("game:betResolved", handleBetResolved);
     socket.on("game:ended", handleGameEnded);
     socket.on("game:error", handleGameError);
 
@@ -78,7 +84,8 @@ export function useGame(gameId, gameType) {
       socket.off("game:playerJoined", handlePlayerJoined);
       socket.off("game:playerLeft", handlePlayerLeft);
       socket.off("game:betPlaced", handleBetPlaced);
-      socket.off("game:payout", handlePayout);
+      socket.off("balance:updated", handlePayout);
+      socket.off("game:betResolved", handleBetResolved);
       socket.off("game:ended", handleGameEnded);
       socket.off("game:error", handleGameError);
 
@@ -86,16 +93,18 @@ export function useGame(gameId, gameType) {
     };
   }, [socket, connected, gameId]);
 
+  /* eslint-enable react-hooks/exhaustive-deps */
+
   // Handle game state update from server
   const handleGameStateUpdate = useCallback((data) => {
     console.log("Game state update received:", data);
 
-    if (data.game) {
-      setGameState(data.game);
-    }
+    // Server may send { gameState } or { game, players }
+    const incoming = data.gameState || data.game || data;
 
-    if (data.players) {
-      setPlayers(data.players);
+    if (incoming) {
+      setGameState(incoming.game || incoming);
+      setPlayers(incoming.players || []);
     }
   }, []);
 
@@ -124,17 +133,18 @@ export function useGame(gameId, gameType) {
     });
   }, []);
 
-  // Handle player left
   const handlePlayerLeft = useCallback((data) => {
     console.log("Player left:", data);
     setPlayers((prev) => prev.filter((p) => p.userId !== data.userId));
   }, []);
 
-  // Handle bet placed
   const handleBetPlaced = useCallback((data) => {
     console.log("Bet placed:", data);
-    // State will be updated via game:update
-    // This is just for notifications/animations
+  }, []);
+
+  const handleBetResolved = useCallback((data) => {
+    console.log("Bet resolved:", data);
+    // Server may emit bet resolution; clients can react if payload contains amounts or outcomes
   }, []);
 
   const handlePayout = useCallback(
@@ -155,7 +165,6 @@ export function useGame(gameId, gameType) {
     [updateAuthBalance],
   );
 
-  // Handle game ended
   const handleGameEnded = useCallback((data) => {
     console.log("Game ended:", data);
     setGameState((prev) => ({
@@ -165,7 +174,6 @@ export function useGame(gameId, gameType) {
     }));
   }, []);
 
-  // Handle game error
   const handleGameError = useCallback((data) => {
     console.error("Game error:", data);
     setError(data.message || data.error || "An error occurred");
@@ -215,7 +223,6 @@ export function useGame(gameId, gameType) {
     [socket, connected],
   );
 
-  // Leave game
   const leaveGame = useCallback(() => {
     if (socket && connected && isInGame) {
       socket.emit("game:leave", { gameId });
@@ -223,7 +230,6 @@ export function useGame(gameId, gameType) {
     }
   }, [socket, connected, gameId, isInGame]);
 
-  // Start new round
   const startNewRound = useCallback(
     (callback) => {
       if (!socket || !connected) {
@@ -251,7 +257,6 @@ export function useGame(gameId, gameType) {
     return gameState.gameState.players[playerId] || null;
   }, [gameState, user?.id]);
 
-  // Check if it's my turn
   const isMyTurn = useCallback(() => {
     if (!gameState?.gameState || !user?.id) {
       return false;

@@ -34,7 +34,7 @@ export default function Blackjack({
     console.log("==== Blackjack Debug ====");
     console.log("player:", player);
     console.log("dealer:", dealer);
-    console.log("status:", status);
+    console.log("game status:", status);
     console.log("roundActive:", roundActive);
     console.log("currentBet:", currentBet);
   }, [player, dealer, status, roundActive, currentBet]);

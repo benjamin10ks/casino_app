@@ -189,6 +189,7 @@ export default function gameHandler(socket, io) {
         // Broadcast canonical updated gameState
         try {
           const updatedState = await gameService.getGameState(gameId, userId);
+          console.log("updatedState after action:", updatedState);
           io.to(`game:${gameId}`).emit("game:update", {
             gameState: updatedState,
           });
@@ -288,31 +289,30 @@ export default function gameHandler(socket, io) {
 
   socket.on("disconnect", async () => {
     const gameId = socket.currentGameId;
-    socket.currentGameId = null;
     if (!gameId) return;
-    if (socket.currentGameId) {
-      try {
-        await gameService.leaveGame(socket.currentGameId, userId);
+    try {
+      await gameService.leaveGame(gameId, userId);
 
-        socket.broadcast
-          .to(`game:${socket.currentGameId}`)
-          .emit("game:playerLeft", {
-            userId,
-            username,
-            reason: "disconnect",
-          });
-
-        const playerCount = await gameSessionRepository.countActivePlayers(
-          socket.currentGameId,
-        );
-
-        io.to("lobby").emit("lobby:gameUpdated", {
-          gameId: socket.currentGameId,
-          playerCount,
+      socket.broadcast
+        .to(`game:${gameId}`)
+        .emit("game:playerLeft", {
+          userId,
+          username,
+          reason: "disconnect",
         });
-      } catch (error) {
-        console.error("Error handling disconnect:", error);
-      }
+
+      const playerCount = await gameSessionRepository.countActivePlayers(
+        gameId,
+      );
+
+      io.to("lobby").emit("lobby:gameUpdated", {
+        gameId,
+        playerCount,
+      });
+    } catch (error) {
+      console.error("Error handling disconnect:", error);
+    } finally {
+      socket.currentGameId = null;
     }
   });
 }
