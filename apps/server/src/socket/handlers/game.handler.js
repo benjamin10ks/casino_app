@@ -244,6 +244,7 @@ export default function gameHandler(socket, io) {
         io.to(`game:${gameId}`).emit("game:update", {
           gameState: updatedState,
         });
+        console.log("updatedState after new round:", updatedState);
       } catch (err) {
         console.error("Failed to fetch game state after new round:", err);
       }
@@ -293,17 +294,14 @@ export default function gameHandler(socket, io) {
     try {
       await gameService.leaveGame(gameId, userId);
 
-      socket.broadcast
-        .to(`game:${gameId}`)
-        .emit("game:playerLeft", {
-          userId,
-          username,
-          reason: "disconnect",
-        });
+      socket.broadcast.to(`game:${gameId}`).emit("game:playerLeft", {
+        userId,
+        username,
+        reason: "disconnect",
+      });
 
-      const playerCount = await gameSessionRepository.countActivePlayers(
-        gameId,
-      );
+      const playerCount =
+        await gameSessionRepository.countActivePlayers(gameId);
 
       io.to("lobby").emit("lobby:gameUpdated", {
         gameId,

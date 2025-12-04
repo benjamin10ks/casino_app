@@ -3,11 +3,17 @@
 Ideas
 
 - GAMBLING
-  - poker(texas hold em)
-  - blackjack?
-  - roulette
-  - slots
-  - RIDE THE BUS
+  - [] poker(texas hold em)
+  - [x] blackjack?
+  - [x] betting, dealing, hitting, standing, busting, blackjack
+  - [] roulette
+  - [] slots
+  - [] RIDE THE BUS
+
+- [x] account creation/login
+- [x] guest accounts
+- [x] Chat feature
+- [x] Lobby selection
 
 # Stack
 
