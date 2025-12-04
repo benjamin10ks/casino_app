@@ -5,7 +5,7 @@ Ideas
 - GAMBLING
   - [ ] poker(texas hold em)
   - [x] blackjack?
-  - [x] betting, dealing, hitting, standing, busting, blackjack
+    - [x] betting, dealing, hitting, standing, busting, blackjack
   - [ ] roulette
   - [ ] slots
   - [ ] RIDE THE BUS
