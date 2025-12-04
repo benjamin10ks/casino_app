@@ -62,8 +62,8 @@ class GameSessionRepository {
   async updateStatus(gameId, userId, status, client = pool) {
     const sql = `
     UPDATE game_sessions
-    SET status = $1,
-      left_at = CASE WHEN $1 = 'left' THEN CURRENT_TIMESTAMP ELSE left_at END,
+    SET status = $1::varchar,
+      left_at = CASE WHEN $1::varchar = 'left' THEN CURRENT_TIMESTAMP ELSE left_at END,
       updated_at = CURRENT_TIMESTAMP
     WHERE game_id = $2 AND user_id = $3
     RETURNING *`;
