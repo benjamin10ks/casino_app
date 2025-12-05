@@ -77,45 +77,6 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Players List */}
-      <div className="bg-white p-4 rounded-xl shadow">
-        <h3 className="text-lg font-semibold mb-2">
-          Players ({players.length})
-        </h3>
-        <ul className="space-y-2">
-          {players.map((player) => (
-            <li
-              key={player.userId}
-              className={`p-3 rounded-lg flex justify-between items-center border
-              ${player.userId === user.id ? "bg-green-100 border-green-400" : "bg-gray-100"}`}
-            >
-              <div className="font-medium">
-                {player.username}
-                {player.userId === user.id && " (You)"}
-              </div>
-              <div className="text-sm flex gap-3">
-                {player.balance !== undefined && (
-                  <span>{player.balance} chips</span>
-                )}
-                {player.currentBet > 0 && <span>Bet: {player.currentBet}</span>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* User Info */}
-      <div className="bg-white p-4 rounded-xl shadow">
-        <h4 className="text-lg font-semibold mb-2">Your Info</h4>
-        <p>Balance: {myPlayerData?.balance} chips</p>
-        {myPlayerData?.currentBet > 0 && (
-          <p>Current Bet: {myPlayerData.currentBet}</p>
-        )}
-        {isMyTurn && (
-          <p className="text-green-600 font-bold mt-2">It's your turn!</p>
-        )}
-      </div>
-
       {/* Game Display */}
       <div className="bg-gray-100 p-4 rounded-xl shadow min-h-[300px]">
         {gameType === "poker" && <Poker />}

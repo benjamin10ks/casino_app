@@ -12,7 +12,20 @@ export default function gameHandler(socket, io) {
     try {
       const { gameId } = data;
 
-      const result = await gameService.joinGame(gameId, userId);
+      const existingSession = await gameSessionRepository.findSession(
+        gameId,
+        userId,
+      );
+
+      let result;
+      if (existingSession) {
+        console.log(
+          `User ${username} (${userId}) rejoining existing session in game ${gameId}`,
+        );
+        result = existingSession;
+      } else {
+        const result = await gameService.joinGame(gameId, userId);
+      }
 
       socket.join(`game:${gameId}`);
       socket.join(`chat:game:${gameId}`);
@@ -67,7 +80,13 @@ export default function gameHandler(socket, io) {
         throw new Error("No game to leave");
       }
 
+      gameState = await gameService.getGameState(leaveGameId, userId);
+      if (!gameState) {
+        throw new Error("Game not found");
+      }
+
       await gameService.leaveGame(leaveGameId, userId);
+      io.to(`game:${leaveGameId}`).emit("game:update", { gameState });
 
       socket.leave(`game:${leaveGameId}`);
       socket.leave(`chat:game:${leaveGameId}`);
@@ -189,6 +208,7 @@ export default function gameHandler(socket, io) {
         // Broadcast canonical updated gameState
         try {
           const updatedState = await gameService.getGameState(gameId, userId);
+          console.log("Action:", action);
           console.log("updatedState after action:", updatedState);
           io.to(`game:${gameId}`).emit("game:update", {
             gameState: updatedState,

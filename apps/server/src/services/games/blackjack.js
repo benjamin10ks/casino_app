@@ -283,15 +283,20 @@ class BlackjackGame extends BaseGame {
             payout: player.bet * 2.5,
             multiplier: 2.5,
           };
+          player.status = "won";
         }
       } else if (dealerBusted) {
         outcome = { status: "win", payout: player.bet * 2, multiplier: 2.0 };
+        player.status = "won";
       } else if (player.value > dealerValue) {
         outcome = { status: "win", payout: player.bet * 2, multiplier: 2.0 };
+        player.status = "won";
       } else if (player.value === dealerValue) {
         outcome = { status: "push", payout: player.bet, multiplier: 1.0 };
+        player.status = "push";
       } else {
         outcome = { status: "lose", payout: 0, multiplier: 0 };
+        player.status = "lost";
       }
 
       console.log(`[${ts}] resolveBets: player ${userId} outcome=`, outcome);

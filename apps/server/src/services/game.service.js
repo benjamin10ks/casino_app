@@ -359,7 +359,7 @@ class GameService {
 
     const resolvedBet = await betRepository.resolveBet(betId, outcome, client);
 
-    if (outcome.status === "won" && outcome.payout > 0) {
+    if (outcome.status === "win" && outcome.payout > 0) {
       await chipsService.addBalance(
         bet.user_id,
         outcome.payout,
@@ -407,6 +407,8 @@ class GameService {
       const updatedGame = await gameRepository.incrementRound(gameId, client);
 
       await gameRepository.updateGameState(gameId, newRoundState, client);
+
+      await gameRepository.updateStatus(gameId, "waiting", client);
 
       if (game.status === "waiting") {
         await gameRepository.startGame(gameId, client);
