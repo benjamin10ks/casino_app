@@ -11,7 +11,6 @@ import Slots from "../games/Slots/Slots.jsx";
 export default function Game() {
   const { gameType, gameId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const {
     gameState,
