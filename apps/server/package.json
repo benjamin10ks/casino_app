@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
     "build": "echo 'No build step for backend'"
   },
   "dependencies": {
@@ -13,7 +14,8 @@
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
